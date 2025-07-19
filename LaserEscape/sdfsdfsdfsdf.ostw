@@ -1,0 +1,3416 @@
+import "customGameSettings_2.lobby";
+
+globalvar define Round;
+globalvar define Safety;
+globalvar define Alive;
+globalvar define LinePos;
+globalvar define LineSpeed;
+globalvar define LinePosXY1;
+globalvar define LinePosXY2;
+globalvar define Direct1;
+globalvar define Direct2;
+globalvar define MatchTime;
+globalvar define Traps1;
+globalvar define Traps2;
+globalvar define Traps3;
+globalvar define Trap1pos;
+globalvar define Trap2pos;
+globalvar define Trap3pos;
+globalvar define EffectID;
+globalvar define TrapZPos1;
+globalvar define TrapZPos2;
+globalvar define zlineimpulse;
+globalvar define zlineimpulsevert;
+globalvar define zline4;
+globalvar define zline3;
+globalvar define zline2;
+globalvar define zline1;
+globalvar define TrapZPos3;
+globalvar define KillAllEffects;
+globalvar define NextRound;
+globalvar define GameOver;
+globalvar define Game0;
+globalvar define Oppositesafety;
+globalvar define Vote1;
+globalvar define Vote2;
+globalvar define Vote3;
+globalvar define Vote4;
+globalvar define VoteInProgress;
+globalvar define VoteTimer;
+globalvar define VoteFinal;
+globalvar define HighestVoteFinal;
+globalvar define RoundInProgress;
+globalvar define GenerateWalls;
+globalvar define WallsRandom;
+globalvar define RunText;
+globalvar define zlineimpulsevert2;
+globalvar define TrapXPos1;
+globalvar define TrapXPos2;
+globalvar define TrapXPos3;
+globalvar define DisableRNG;
+globalvar define RandomEvent;
+globalvar define EventCD;
+globalvar define LineSpeedPrev;
+globalvar define RandomOrbs;
+globalvar define RandomOrbsEvent;
+globalvar define CircleTrapAngle;
+globalvar define CircleTrapHeight;
+playervar define Safe;
+playervar define isDeaad;
+playervar define AnaHealCD;
+playervar define MercySprint;
+playervar define SombraEMP;
+playervar define MeleeCD;
+playervar define MeiAmmo;
+playervar define MeiUlt;
+playervar define LucioUlt;
+playervar define WidowOldPos;
+playervar define WidowCD;
+playervar define IsPoisoned;
+playervar define EffectIDPlayers;
+playervar define GenjiCD;
+playervar define GenjiUlt;
+playervar define AtSafetyy;
+playervar define NewHud;
+playervar define VoteCD;
+playervar define WallEvent;
+playervar define hero;
+playervar define Phasing;
+playervar define MoiraUlt;
+playervar define MoiraPhase;
+
+disabled rule: "Debug hero 2"
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(), Button.SecondaryFire) == true)
+{
+    ForcePlayerHero(EventPlayer(), Hero.Ana);
+}
+
+disabled rule: "Debug"
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(), Button.PrimaryFire) == true)
+{
+    ForcePlayerHero(EventPlayer(), Hero.Mercy);
+}
+
+disabled rule: "DEBUG"
+Event.OngoingPlayer
+{
+    CreateHudText(HostPlayer(), <"<0>", PositionOf(HostPlayer())>, null, null, Location.Left, 0, Color.White, null, null, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(HostPlayer(), <"<0>", ServerLoad()>, null, null, Location.Left, 0, Color.White, null, null, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(HostPlayer(), <"<0>", MercySprint>, null, null, Location.Left, 0, Color.White, null, null, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+}
+
+disabled rule: "DEBUG 2"
+Event.OngoingPlayer
+if (IsButtonHeld(EventPlayer(), Button.Interact) == true)
+{
+    Teleport(HostPlayer(), Vector(17, 50, 17));
+}
+
+rule: "Game Start"
+Event.OngoingPlayer
+if (IsGameInProgress() == true)
+if (AllLivingPlayers(Team.All).IsTrueForAll(x => IsDummyBot(x)) == false)
+if (Game0 == 0)
+if (IsAlive(EventPlayer()) == true)
+{
+    Wait(1, WaitBehavior.AbortWhenFalse);
+    GenerateWalls = true;
+    Game0 = 1;
+    # getAllPlayers().disableRespawn()
+    DisableCompletion();
+    ForcePlayerHero(EventPlayer(), RandomValueInArray(AllowedHeroes(EventPlayer())));
+    isDeaad = false;
+    DisallowButton(AllPlayers(Team.All), Button.Melee);
+    Round = 1;
+    # createInWorldText(eventPlayer, \"Reach Here!\", Safety + vect(0, 3, 0), 2, Clip.SURFACES, WorldTextReeval.VISIBILITY_POSITION_AND_STRING, Color.GREEN, SpecVisibility.DEFAULT)
+    BigMessage(EventPlayer(), "Loading");
+    SetStatus(AllLivingPlayers(Team.All), null, Status.Rooted, 7.25);
+    Wait(3, WaitBehavior.IgnoreCondition);
+    Wait(0.25, WaitBehavior.IgnoreCondition);
+    Teleport(EventPlayer(), Vector(17, 50, 17));
+    DisableMovementCollisionWithPlayers(AllPlayers(Team.All));
+    BigMessage(EventPlayer(), "Race To The Other Side!");
+    Wait(1, WaitBehavior.IgnoreCondition);
+    SmallMessage(EventPlayer(), "3");
+    Wait(1, WaitBehavior.IgnoreCondition);
+    SmallMessage(EventPlayer(), "2");
+    Wait(1, WaitBehavior.IgnoreCondition);
+    SmallMessage(EventPlayer(), "1");
+    Wait(1, WaitBehavior.IgnoreCondition);
+    SmallMessage(EventPlayer(), "GO!");
+    RandomOrbsF();
+    AllowButton(AllPlayers(Team.All), Button.Melee);
+    LineSpeed = 1;
+    LineSpeedPrev = LineSpeed;
+    MatchTime = true;
+    RoundInProgress = true;
+    GenerateWalls = false;
+}
+
+rule: "Infinite Match Time"
+{
+    DisableCompletion();
+    SetMatchTime(10000);
+    PauseMatchTime();
+}
+
+rule: "Disable RNG"
+{
+    DisableRNG = WorkshopSettingToggle("Disable RNG", "Default Layout Only", false, 0);
+}
+
+rule: "Voicelines"
+Event.OngoingPlayer
+{
+    StartModifyingHeroVoiceLines(EventPlayer(), 1.2, true);
+}
+
+rule: "Player Joined"
+Event.OnPlayerJoin
+# @Condition eventPlayer.hasSpawned() == true
+if (IsDummyBot(EventPlayer()) == false)
+{
+    NewHud = "what r u doing in my swamp";
+    DisableRespawning(EventPlayer());
+    DisableMovementCollisionWithPlayers(AllPlayers(Team.All));
+    EnableSpectate(EventPlayer());
+    Wait(1, WaitBehavior.IgnoreCondition);
+    Kill(EventPlayer(), null);
+}
+
+rule: "Disable respawn"
+Event.OngoingPlayer
+{
+    while (true)
+    {
+        # eventPlayer.disableRespawn()
+        SetRespawnMaxTime(EventPlayer(), 9999);
+        EnableSpectate(EventPlayer());
+        Wait(1, WaitBehavior.IgnoreCondition);
+    }
+}
+
+rule: "Player Dies while safe"
+Event.OnDeath
+if (Safe == true)
+if (AtSafetyy == true)
+{
+    Alive -= 1;
+}
+
+rule: "Player leaves while safe"
+Event.OnPlayerLeave
+if (Safe == true)
+if (isDeaad == false)
+if (AtSafetyy == true)
+{
+    Alive -= 1;
+}
+
+rule: "Emote stun"
+Event.OngoingPlayer
+if (IsCommunicatingAnyEmote(EventPlayer()) == true)
+{
+    ClearStatus(EventPlayer(), Status.PhasedOut);
+    ClearStatus(EventPlayer(), Status.Rooted);
+    SetStatus(EventPlayer(), null, Status.Stunned, 1);
+    Wait(0.25, WaitBehavior.IgnoreCondition);
+    if (Safe == true)
+    {
+        SetStatus(EventPlayer(), null, Status.PhasedOut, 9999);
+        SetStatus(EventPlayer(), null, Status.Rooted, 9999);
+    }
+}
+
+disabled rule: "Random Hero"
+Event.OngoingPlayer
+{
+    SetMatchTime(5);
+    Wait(0.25, WaitBehavior.IgnoreCondition);
+    ForcePlayerHero(EventPlayer(), RandomValueInArray(AllowedHeroes(EventPlayer())));
+}
+
+rule: "Wall lines"
+if (IsGameInProgress() == true)
+{
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, Vector(21.3, 46, 21.2), Vector(21.3, 46, -21.2), Color.Orange, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, Vector(21.3, 46, 21.2), Vector(-21.3, 46, 21.2), Color.Orange, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, Vector(21.3, 47, 21.2), Vector(21.3, 47, -21.2), Color.Orange, EffectRev.VisibleToPositionAndRadius);
+    # createBeam(getAllPlayers(), Beam.GRAPPLE, vect(21.3, 47, 21.2), vect(-21.3, 47, 21.2), Color.ORANGE, EffectReeval.VISIBILITY_POSITION_AND_RADIUS)
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, Vector(-21.3, 46, 21.2), Vector(-21.3, 46, -21.2), Color.Orange, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, Vector(21.3, 46, -21.2), Vector(-21.3, 46, -21.2), Color.Orange, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, Vector(-21.3, 47, 21.2), Vector(-21.3, 47, -21.2), Color.Orange, EffectRev.VisibleToPositionAndRadius);
+    # createBeam(getAllPlayers(), Beam.GRAPPLE, vect(21.3, 47, -21.2), vect(-21.3, 47, -21.2), Color.ORANGE, EffectReeval.VISIBILITY_POSITION_AND_RADIUS)
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, Vector(21.3, 47, 21.2), Vector(21.3, 46, 21.201), Color.Orange, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, Vector(-21.3, 47, 21.2), Vector(-21.3, 46, 21.201), Color.Orange, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, Vector(21.3, 47, -21.2), Vector(21.3, 46, -21.201), Color.Orange, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, Vector(-21.3, 47, -21.2), Vector(-21.3, 46, -21.201), Color.Orange, EffectRev.VisibleToPositionAndRadius);
+}
+
+rule: "Wall 1 Impulse"
+Event.OngoingPlayer
+if (XOf(PositionOf(EventPlayer())) > 21)
+{
+    ApplyImpulse(EventPlayer(), Vector(-10, 3, 0), 10, Relative.ToWorld, ContraryMotion.Cancel);
+    SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+    Wait(0.25, WaitBehavior.IgnoreCondition);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Wall 2 Impulse"
+Event.OngoingPlayer
+if (XOf(PositionOf(EventPlayer())) < -21)
+{
+    ApplyImpulse(EventPlayer(), Vector(10, 3, 0), 10, Relative.ToWorld, ContraryMotion.Cancel);
+    SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+    Wait(0.25, WaitBehavior.IgnoreCondition);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Wall 3 Impulse"
+Event.OngoingPlayer
+if (ZOf(PositionOf(EventPlayer())) > 21)
+{
+    ApplyImpulse(EventPlayer(), Vector(0, 3, -10), 10, Relative.ToWorld, ContraryMotion.Cancel);
+    SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+    Wait(0.25, WaitBehavior.IgnoreCondition);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Wall 4 Impulse"
+Event.OngoingPlayer
+if (ZOf(PositionOf(EventPlayer())) < -21)
+{
+    ApplyImpulse(EventPlayer(), Vector(0, 3, 10), 10, Relative.ToWorld, ContraryMotion.Cancel);
+    SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+    Wait(0.25, WaitBehavior.IgnoreCondition);
+    LoopIfConditionIsTrue();
+}
+
+rule: "RNG Walls"
+if (GenerateWalls == true)
+if (DisableRNG == false)
+{
+    WallsRandom[1] = RandomInteger(1, 4);
+    switch (WallsRandom[1]){
+        case 1:
+            zline1[1] = Vector(21.2, 46, 12.75);
+            zline1[2] = Vector(-12.75, 46, 12.75);
+            zline1[3] = Vector(0, -1, 0);
+            zline1[4] = Vector(0, -1, 0);
+            zline1[5] = Vector(-12.75, 46, 12.75);
+            zline2[1] = Vector(-21.2, 46, 4.25);
+            zline2[2] = Vector(12.75, 46, 4.25);
+            zline2[3] = Vector(0, -1, 0);
+            zline2[4] = Vector(0, -1, 0);
+            zline2[5] = Vector(12.75, 46, 4.25);
+            zline3[1] = Vector(21.2, 46, -4.25);
+            zline3[2] = Vector(-12.75, 46, -4.25);
+            zline3[3] = Vector(0, -1, 0);
+            zline3[4] = Vector(0, -1, 0);
+            zline3[5] = Vector(-12.75, 46, -4.25);
+            zline4[1] = Vector(-21.2, 46, -12.75);
+            zline4[2] = Vector(12.75, 46, -12.75);
+            zline4[3] = Vector(0, -1, 0);
+            zline4[4] = Vector(0, -1, 0);
+            zline4[5] = Vector(12.75, 46, -12.75);
+            zline4[6] = Vector(0, -1, 0);
+            zline4[7] = Vector(0, -1, 0);
+            break;
+        case 2:
+            zline1[1] = Vector(21.2, 46, 12.75);
+            zline1[2] = Vector(-12.75, 46, 12.75);
+            zline1[3] = Vector(12.75, 46, 4.25);
+            zline1[4] = Vector(12.75, 46, -12.75);
+            zline1[5] = Vector(12.75, 46, -12.75);
+            zline2[1] = Vector(0, -1, 0);
+            zline2[2] = Vector(0, -1, 0);
+            zline2[3] = Vector(4.25, 46, -21.2);
+            zline2[4] = Vector(4.25, 46, -4.25);
+            zline2[5] = Vector(-12.75, 46, 12.75);
+            zline3[1] = Vector(4.25, 46, -4.25);
+            zline3[2] = Vector(-12.75, 46, -4.25);
+            zline3[3] = Vector(0, -1, 0);
+            zline3[4] = Vector(0, -1, 0);
+            zline3[5] = Vector(-12.75, 46, -4.25);
+            zline4[1] = Vector(-21.2, 46, -12.75);
+            zline4[2] = Vector(-4.25, 46, -12.75);
+            zline4[3] = Vector(-21.2, 46, 4.25);
+            zline4[4] = Vector(12.75, 46, 4.25);
+            zline4[5] = Vector(-4.25, 46, -12.75);
+            zline4[6] = Vector(0, -1, 0);
+            zline4[7] = Vector(0, -1, 0);
+            break;
+        case 3:
+            zline1[1] = Vector(12.75, 46, 21.2);
+            zline1[2] = Vector(12.75, 46, 12.75);
+            zline1[3] = Vector(4.25, 46, -4.25);
+            zline1[4] = Vector(-12.75, 46, -4.25);
+            zline1[5] = Vector(-12.75, 46, -4.25);
+            zline2[1] = Vector(4.25, 46, -4.25);
+            zline2[2] = Vector(4.25, 46, 12.75);
+            zline2[3] = Vector(4.25, 46, 12.75);
+            zline2[4] = Vector(-12.75, 46, 12.75);
+            zline2[5] = Vector(-12.75, 46, 12.75);
+            zline3[1] = Vector(-21.2, 46, 4.25);
+            zline3[2] = Vector(-4.25, 46, 4.25);
+            zline3[3] = Vector(-21.2, 46, -12.75);
+            zline3[4] = Vector(12.75, 46, -12.75);
+            zline3[5] = Vector(-4.25, 46, 4.25);
+            zline4[1] = Vector(12.75, 46, -12.75);
+            zline4[2] = Vector(12.75, 46, -4.25);
+            zline4[3] = Vector(21.2, 46, 4.25);
+            zline4[4] = Vector(4.25, 46, 4.25);
+            zline4[5] = Vector(12.75, 46, -4.25);
+            zline4[6] = Vector(12.75, 46, 12.75);
+            zline4[7] = Vector(0, -1, 0);
+            break;
+        case 4:
+            zline1[1] = Vector(12.75, 46, 21.2);
+            zline1[2] = Vector(12.75, 46, 12.75);
+            zline1[3] = Vector(4.25, 46, 12.75);
+            zline1[4] = Vector(4.25, 46, 4.25);
+            zline1[5] = Vector(12.75, 46, 12.75);
+            zline2[1] = Vector(-4.25, 46, 21.2);
+            zline2[2] = Vector(-4.25, 46, 12.75);
+            zline2[3] = Vector(-12.75, 46, 12.75);
+            zline2[4] = Vector(-12.75, 46, 4.25);
+            zline2[5] = Vector(4.25, 46, 12.75);
+            zline3[1] = Vector(-21.2, 46, 0);
+            zline3[2] = Vector(12.75, 46, -8.5);
+            zline3[3] = Vector(12.75, 46, -8.5);
+            zline3[4] = Vector(12.75, 46, -12.75);
+            zline3[5] = Vector(12.75, 46, -12.75);
+            zline4[1] = Vector(-12.75, 46, -21.2);
+            zline4[2] = Vector(-12.75, 46, -12.75);
+            zline4[3] = Vector(21.2, 46, 4.25);
+            zline4[4] = Vector(-12.75, 46, 4.25);
+            zline4[5] = Vector(-4.25, 46, 12.75);
+            zline4[6] = Vector(-12.75, 46, 12.75);
+            zline4[7] = Vector(-12.75, 46, -12.75);
+            break;
+    }
+}
+
+rule: "RNG Walls disabled"
+if (DisableRNG == true)
+{
+    WallsRandom[1] = 1;
+    zline1[1] = Vector(21.2, 46, 12.75);
+    zline1[2] = Vector(-12.75, 46, 12.75);
+    zline1[3] = Vector(0, -1, 0);
+    zline1[4] = Vector(0, -1, 0);
+    zline1[5] = Vector(-12.75, 46, 12.75);
+    zline2[1] = Vector(-21.2, 46, 4.25);
+    zline2[2] = Vector(12.75, 46, 4.25);
+    zline2[3] = Vector(0, -1, 0);
+    zline2[4] = Vector(0, -1, 0);
+    zline2[5] = Vector(12.75, 46, 4.25);
+    zline3[1] = Vector(21.2, 46, -4.25);
+    zline3[2] = Vector(-12.75, 46, -4.25);
+    zline3[3] = Vector(0, -1, 0);
+    zline3[4] = Vector(0, -1, 0);
+    zline3[5] = Vector(-12.75, 46, -4.25);
+    zline4[1] = Vector(-21.2, 46, -12.75);
+    zline4[2] = Vector(12.75, 46, -12.75);
+    zline4[3] = Vector(0, -1, 0);
+    zline4[4] = Vector(0, -1, 0);
+    zline4[5] = Vector(12.75, 46, -12.75);
+    zline4[6] = Vector(0, -1, 0);
+    zline4[7] = Vector(0, -1, 0);
+}
+
+rule: "Z Lines"
+if (IsGameInProgress() == true)
+{
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, zline1[1], zline1[2], Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, zline1[1] + Vector(0, 1, 0), zline1[2] + Vector(0, 1, 0), Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, zline1[1] + Vector(0, 0.5, 0), zline1[2] + Vector(0, 0.5, 0), Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, zline1[3], zline1[4], Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, zline1[3] + Vector(0, 1, 0), zline1[4] + Vector(0, 1, 0), Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, zline1[3] + Vector(0, 0.5, 0), zline1[4] + Vector(0, 0.5, 0), Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, zline1[5], zline1[5] + Vector(0, 2.5, 0.01), Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, zline1[5] + Vector(0, 3, 0), 0.5, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, zline2[1], zline2[2], Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, zline2[1] + Vector(0, 1, 0), zline2[2] + Vector(0, 1, 0), Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, zline2[1] + Vector(0, 0.5, 0), zline2[2] + Vector(0, 0.5, 0), Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, zline2[3], zline2[4], Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, zline2[3] + Vector(0, 1, 0), zline2[4] + Vector(0, 1, 0), Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, zline2[3] + Vector(0, 0.5, 0), zline2[4] + Vector(0, 0.5, 0), Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, zline2[5], zline2[5] + Vector(0, 2.5, 0.01), Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, zline2[5] + Vector(0, 3, 0), 0.5, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, zline3[1], zline3[2], Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, zline3[1] + Vector(0, 1, 0), zline3[2] + Vector(0, 1, 0), Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, zline3[1] + Vector(0, 0.5, 0), zline3[2] + Vector(0, 0.5, 0), Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, zline3[3], zline3[4], Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, zline3[3] + Vector(0, 1, 0), zline3[4] + Vector(0, 1, 0), Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, zline3[3] + Vector(0, 0.5, 0), zline3[4] + Vector(0, 0.5, 0), Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, zline3[5], zline3[5] + Vector(0, 2.5, 0.01), Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, zline3[5] + Vector(0, 3, 0), 0.5, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, zline4[1], zline4[2], Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, zline4[1] + Vector(0, 1, 0), zline4[2] + Vector(0, 1, 0), Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, zline4[1] + Vector(0, 0.5, 0), zline4[2] + Vector(0, 0.5, 0), Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, zline4[3], zline4[4], Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, zline4[3] + Vector(0, 1, 0), zline4[4] + Vector(0, 1, 0), Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, zline4[3] + Vector(0, 0.5, 0), zline4[4] + Vector(0, 0.5, 0), Color.Red, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, zline4[5], zline4[5] + Vector(0, 2.5, 0.01), Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, zline4[5] + Vector(0, 3, 0), 0.5, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, zline4[6], zline4[6] + Vector(0, 2.5, 0.01), Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, zline4[6] + Vector(0, 3, 0), 0.5, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.GrappleBeam, zline4[7], zline4[7] + Vector(0, 2.5, 0.01), Color.Purple, EffectRev.VisibleToPositionAndRadius);
+    CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, zline4[7] + Vector(0, 3, 0), 0.5, EffectRev.VisibleToPositionAndRadius);
+}
+
+rule: "Layout 1 Impulse"
+Event.OngoingPlayer
+if (WallsRandom[1] == 1)
+if (AtSafetyy == false)
+if (RoundInProgress == true)
+{
+    while (WallsRandom[1] == 1)
+    {
+        if (XOf(PositionOf(EventPlayer())) >= XOf(zline1[2]) && XOf(PositionOf(EventPlayer())) <= XOf(zline1[1]) + 2 && ZOf(PositionOf(EventPlayer())) >= ZOf(zline1[2]) - 0.5 && ZOf(PositionOf(EventPlayer())) <= ZOf(zline1[1]) + 0.5 && YOf(PositionOf(EventPlayer())) <= 49 && Phasing != true && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulse, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        if (XOf(PositionOf(EventPlayer())) >= XOf(zline2[1]) - 2 && XOf(PositionOf(EventPlayer())) <= XOf(zline2[2]) && ZOf(PositionOf(EventPlayer())) >= ZOf(zline2[1]) - 0.5 && ZOf(PositionOf(EventPlayer())) <= ZOf(zline2[2]) + 0.5 && YOf(PositionOf(EventPlayer())) <= 49 && Phasing != true && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulse, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        if (XOf(PositionOf(EventPlayer())) >= XOf(zline3[2]) && XOf(PositionOf(EventPlayer())) <= XOf(zline3[1]) + 2 && ZOf(PositionOf(EventPlayer())) >= ZOf(zline3[2]) - 0.5 && ZOf(PositionOf(EventPlayer())) <= ZOf(zline3[1]) + 0.5 && YOf(PositionOf(EventPlayer())) <= 49 && Phasing != true && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulse, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        if (XOf(PositionOf(EventPlayer())) >= XOf(zline4[1]) - 2 && XOf(PositionOf(EventPlayer())) <= XOf(zline4[2]) && ZOf(PositionOf(EventPlayer())) >= ZOf(zline4[1]) - 0.5 && ZOf(PositionOf(EventPlayer())) <= ZOf(zline4[2]) + 0.5 && YOf(PositionOf(EventPlayer())) <= 49 && Phasing != true && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulse, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        Wait(0.02, WaitBehavior.IgnoreCondition);
+    }
+}
+
+rule: "Layout 2 Impulse"
+Event.OngoingPlayer
+if (WallsRandom[1] == 2)
+if (AtSafetyy == false)
+if (RoundInProgress == true)
+{
+    while (WallsRandom[1] == 2)
+    {
+        if (XOf(PositionOf(EventPlayer())) >= XOf(zline1[2]) && XOf(PositionOf(EventPlayer())) <= XOf(zline1[1]) + 2 && ZOf(PositionOf(EventPlayer())) >= ZOf(zline1[2]) - 0.5 && ZOf(PositionOf(EventPlayer())) <= ZOf(zline1[1]) + 0.5 && YOf(PositionOf(EventPlayer())) <= 49 && Phasing != true && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulse, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        if (XOf(PositionOf(EventPlayer())) >= XOf(zline4[3]) - 2 && XOf(PositionOf(EventPlayer())) <= XOf(zline4[4]) && ZOf(PositionOf(EventPlayer())) >= ZOf(zline4[3]) - 0.5 && ZOf(PositionOf(EventPlayer())) <= ZOf(zline4[4]) + 0.5 && YOf(PositionOf(EventPlayer())) <= 70 && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulse, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        if (XOf(PositionOf(EventPlayer())) >= XOf(zline1[3]) - 0.5 && XOf(PositionOf(EventPlayer())) <= XOf(zline1[4]) + 0.5 && ZOf(PositionOf(EventPlayer())) >= ZOf(zline1[4]) && ZOf(PositionOf(EventPlayer())) <= ZOf(zline1[3]) && YOf(PositionOf(EventPlayer())) <= 49 && Phasing != true && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulsevert, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        if (XOf(PositionOf(EventPlayer())) >= XOf(zline2[3]) - 0.5 && XOf(PositionOf(EventPlayer())) <= XOf(zline2[4]) + 0.5 && ZOf(PositionOf(EventPlayer())) >= ZOf(zline2[3]) - 2 && ZOf(PositionOf(EventPlayer())) <= ZOf(zline2[4]) && YOf(PositionOf(EventPlayer())) <= 49 && Phasing != true && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulsevert, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        if (XOf(PositionOf(EventPlayer())) >= XOf(zline3[2]) && XOf(PositionOf(EventPlayer())) <= XOf(zline3[1]) && ZOf(PositionOf(EventPlayer())) >= ZOf(zline3[1]) - 0.5 && ZOf(PositionOf(EventPlayer())) <= ZOf(zline3[2]) + 0.5 && YOf(PositionOf(EventPlayer())) <= 49 && Phasing != true && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulse, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        if (XOf(PositionOf(EventPlayer())) >= XOf(zline4[1]) && XOf(PositionOf(EventPlayer())) <= XOf(zline4[2]) && ZOf(PositionOf(EventPlayer())) >= ZOf(zline4[1]) - 0.5 && ZOf(PositionOf(EventPlayer())) <= ZOf(zline4[2]) + 0.5 && YOf(PositionOf(EventPlayer())) <= 49 && Phasing != true && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulse, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        Wait(0.02, WaitBehavior.IgnoreCondition);
+    }
+}
+
+rule: "Layout 3 Impulse"
+Event.OngoingPlayer
+if (WallsRandom[1] == 3)
+if (AtSafetyy == false)
+if (RoundInProgress == true)
+{
+    while (WallsRandom[1] == 3)
+    {
+        if (XOf(PositionOf(EventPlayer())) >= XOf(zline1[1]) - 0.5 && XOf(PositionOf(EventPlayer())) <= XOf(zline1[2]) + 0.5 && ZOf(PositionOf(EventPlayer())) >= ZOf(zline1[2]) && ZOf(PositionOf(EventPlayer())) <= ZOf(zline1[1]) + 2 && YOf(PositionOf(EventPlayer())) <= 49 && Phasing != true && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulsevert, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        if (XOf(PositionOf(EventPlayer())) >= XOf(zline1[4]) && XOf(PositionOf(EventPlayer())) <= XOf(zline1[3]) && ZOf(PositionOf(EventPlayer())) >= ZOf(zline1[4]) - 0.5 && ZOf(PositionOf(EventPlayer())) <= ZOf(zline1[3]) + 0.5 && YOf(PositionOf(EventPlayer())) <= 49 && Phasing != true && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulse, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        if (XOf(PositionOf(EventPlayer())) >= XOf(zline2[4]) && XOf(PositionOf(EventPlayer())) <= XOf(zline2[3]) && ZOf(PositionOf(EventPlayer())) >= ZOf(zline2[4]) - 0.5 && ZOf(PositionOf(EventPlayer())) <= ZOf(zline2[3]) + 0.5 && YOf(PositionOf(EventPlayer())) <= 49 && Phasing != true && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulse, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        if (XOf(PositionOf(EventPlayer())) >= XOf(zline2[1]) - 0.5 && XOf(PositionOf(EventPlayer())) <= XOf(zline2[2]) + 0.5 && ZOf(PositionOf(EventPlayer())) >= ZOf(zline2[1]) && ZOf(PositionOf(EventPlayer())) <= 4.25 && YOf(PositionOf(EventPlayer())) <= 49 && Phasing != true && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulsevert2, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        if (XOf(PositionOf(EventPlayer())) >= XOf(zline2[1]) - 0.5 && XOf(PositionOf(EventPlayer())) <= XOf(zline2[2]) + 0.5 && ZOf(PositionOf(EventPlayer())) >= 4.25 && ZOf(PositionOf(EventPlayer())) <= ZOf(zline2[2]) && YOf(PositionOf(EventPlayer())) <= 49 && Phasing != true && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulsevert, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        if (XOf(PositionOf(EventPlayer())) >= XOf(zline3[1]) - 2 && XOf(PositionOf(EventPlayer())) <= XOf(zline3[2]) && ZOf(PositionOf(EventPlayer())) >= ZOf(zline3[1]) - 0.5 && ZOf(PositionOf(EventPlayer())) <= ZOf(zline3[2]) + 0.5 && YOf(PositionOf(EventPlayer())) <= 49 && Phasing != true && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulse, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        if (XOf(PositionOf(EventPlayer())) >= XOf(zline3[3]) - 2 && XOf(PositionOf(EventPlayer())) <= XOf(zline3[4]) && ZOf(PositionOf(EventPlayer())) >= ZOf(zline3[3]) - 0.5 && ZOf(PositionOf(EventPlayer())) <= ZOf(zline3[4]) + 0.5 && YOf(PositionOf(EventPlayer())) <= 49 && Phasing != true && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulse, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        if (XOf(PositionOf(EventPlayer())) >= XOf(zline4[4]) - 0.5 && XOf(PositionOf(EventPlayer())) <= XOf(zline4[3]) + 2 && ZOf(PositionOf(EventPlayer())) >= ZOf(zline4[3]) - 0.5 && ZOf(PositionOf(EventPlayer())) <= ZOf(zline4[4]) + 0.5 && YOf(PositionOf(EventPlayer())) <= 70 && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulse, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        if (XOf(PositionOf(EventPlayer())) >= XOf(zline4[1]) - 0.5 && XOf(PositionOf(EventPlayer())) <= XOf(zline4[2]) + 0.5 && ZOf(PositionOf(EventPlayer())) >= ZOf(zline4[1]) && ZOf(PositionOf(EventPlayer())) <= ZOf(zline4[2]) && YOf(PositionOf(EventPlayer())) <= 49 && Phasing != true && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulsevert2, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        Wait(0.02, WaitBehavior.IgnoreCondition);
+    }
+}
+
+rule: "Layout 4 Impulse"
+Event.OngoingPlayer
+if (WallsRandom[1] == 4)
+if (AtSafetyy == false)
+if (RoundInProgress == true)
+{
+    while (WallsRandom[1] == 4)
+    {
+        if (XOf(PositionOf(EventPlayer())) >= XOf(zline1[1]) - 0.5 && XOf(PositionOf(EventPlayer())) <= XOf(zline1[2]) + 0.5 && ZOf(PositionOf(EventPlayer())) >= ZOf(zline1[2]) && ZOf(PositionOf(EventPlayer())) <= ZOf(zline1[1]) + 2 && YOf(PositionOf(EventPlayer())) <= 49 && Phasing != true && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulsevert, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        if (XOf(PositionOf(EventPlayer())) >= XOf(zline1[3]) - 0.5 && XOf(PositionOf(EventPlayer())) <= XOf(zline1[3]) + 0.5 && ZOf(PositionOf(EventPlayer())) >= ZOf(zline1[4]) && ZOf(PositionOf(EventPlayer())) <= ZOf(zline1[3]) && YOf(PositionOf(EventPlayer())) <= 49 && Phasing != true && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulsevert, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        if (XOf(PositionOf(EventPlayer())) >= XOf(zline2[1]) - 0.5 && XOf(PositionOf(EventPlayer())) <= XOf(zline2[2]) + 0.5 && ZOf(PositionOf(EventPlayer())) >= ZOf(zline2[2]) && ZOf(PositionOf(EventPlayer())) <= ZOf(zline2[1]) + 2 && YOf(PositionOf(EventPlayer())) <= 49 && Phasing != true && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulsevert, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        if (XOf(PositionOf(EventPlayer())) >= XOf(zline2[3]) - 0.5 && XOf(PositionOf(EventPlayer())) <= XOf(zline2[4]) + 0.5 && ZOf(PositionOf(EventPlayer())) >= ZOf(zline2[4]) && ZOf(PositionOf(EventPlayer())) <= ZOf(zline2[3]) && YOf(PositionOf(EventPlayer())) <= 49 && Phasing != true && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulsevert, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        if (RayCastHitPlayer(zline3[1], zline3[2], EventPlayer(), null, true) == true || RayCastHitPlayer(zline3[1] + Vector(0, 0.5, 0), zline3[2] + Vector(0, 0.5, 0), EventPlayer(), null, true) == true || RayCastHitPlayer(zline3[1] + Vector(0, 1, 0), zline3[2] + Vector(0, 1, 0), EventPlayer(), null, true) == true && Phasing != true && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulse, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        if (XOf(PositionOf(EventPlayer())) >= XOf(zline3[3]) - 0.5 && XOf(PositionOf(EventPlayer())) <= XOf(zline3[4]) + 0.5 && ZOf(PositionOf(EventPlayer())) >= ZOf(zline3[4]) && ZOf(PositionOf(EventPlayer())) <= ZOf(zline3[3]) && YOf(PositionOf(EventPlayer())) <= 49 && Phasing != true && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulsevert, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        if (XOf(PositionOf(EventPlayer())) >= XOf(zline4[1]) - 0.5 && XOf(PositionOf(EventPlayer())) <= XOf(zline4[2]) + 0.5 && ZOf(PositionOf(EventPlayer())) >= ZOf(zline4[1]) - 2 && ZOf(PositionOf(EventPlayer())) <= ZOf(zline4[2]) && YOf(PositionOf(EventPlayer())) <= 49 && Phasing != true && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulsevert, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        if (XOf(PositionOf(EventPlayer())) >= XOf(zline4[4]) && XOf(PositionOf(EventPlayer())) <= XOf(zline4[3]) + 2 && ZOf(PositionOf(EventPlayer())) >= ZOf(zline4[3]) - 0.5 && ZOf(PositionOf(EventPlayer())) <= ZOf(zline4[4]) + 0.5 && YOf(PositionOf(EventPlayer())) <= 70 && MoiraPhase != true)
+        {
+            ApplyImpulse(EventPlayer(), zlineimpulse, 10, Relative.ToWorld, ContraryMotion.Cancel);
+            SetStatus(EventPlayer(), null, Status.Rooted, 0.3);
+            Wait(0.1, WaitBehavior.IgnoreCondition);
+            LoopIfConditionIsTrue();
+        }
+        Wait(0.02, WaitBehavior.IgnoreCondition);
+    }
+}
+
+rule: "Global Variable Round"
+{
+    Round = 1;
+}
+
+rule: "Even Round"
+if (Round % 2 == 0)
+{
+    Direc2();
+    # RoundSpeed1()\nwait(1.25, Wait.ABORT_WHEN_FALSE)
+    DeathDirec2();
+    Direct2 = true;
+    Direct1 = false;
+}
+
+rule: "Odd Round"
+if (Round % 2 == 1)
+{
+    Direc1();
+    # RoundSpeed2()\nwait(1.25, Wait.ABORT_WHEN_FALSE)
+    DeathDirec1();
+    Direct2 = false;
+    Direct1 = true;
+}
+
+void Direc1() "Direction 1"
+{
+    zlineimpulse = Vector(0, 1, 2);
+    zlineimpulsevert = Vector(2, 1, 0);
+    zlineimpulsevert2 = Vector(-2, 1, 0);
+    Safety = Vector(-17, 46, -17);
+    LinePosXY1 = Vector(21, 46, 30);
+    LinePosXY2 = Vector(-21, 46, 30);
+    Oppositesafety = Vector(17, 46, 17);
+}
+
+void Direc2() "Direction 2"
+{
+    zlineimpulse = Vector(0, 1, -2);
+    zlineimpulsevert = Vector(-2, 1, 0);
+    zlineimpulsevert2 = Vector(2, 1, 0);
+    Safety = Vector(17, 46, 17);
+    LinePosXY1 = Vector(21, 46, -30);
+    LinePosXY2 = Vector(-21, 46, -30);
+    Oppositesafety = Vector(-17, 46, -17);
+}
+
+rule: "Safety Register"
+Event.OngoingPlayer
+if (DistanceBetween(EventPlayer(), Safety) <= 3.8)
+if (IsDummyBot(EventPlayer()) == false)
+if (GameOver == false)
+{
+    Safe = true;
+    Game0 = 1;
+}
+
+rule: "Safety"
+Event.OngoingPlayer
+if (Safe == true)
+if (isDeaad == false)
+if (GameOver == false)
+{
+    Teleport(EventPlayer(), Safety);
+    SetInvisible(EventPlayer(), InvisibleTo.All);
+    Heal(EventPlayer(), null, 50);
+    SetStatus(EventPlayer(), null, Status.Invincible, 9999);
+    SetStatus(EventPlayer(), null, Status.Rooted, 9999);
+    SetStatus(EventPlayer(), null, Status.PhasedOut, 9999);
+    DisallowButton(EventPlayer(), Button.Melee);
+    LineSpeed += 0.05;
+    Alive += 1;
+    ModifyPlayerScore(EventPlayer(), 1);
+    AtSafetyy = true;
+}
+
+rule: "Round End/Restart"
+if (Alive == CountOf(FilteredArray(AllLivingPlayers(Team.All), !IsDummyBot(ArrayElement()))))
+if (Alive > 1)
+{
+    BigMessage(AllPlayers(Team.All), <"Round <0> over!", Round>);
+    RoundInProgress = false;
+    StopChasingVariable(LinePos);
+    KillAllEffects = true;
+    ByeEffectsxoxo();
+    Wait(6, WaitBehavior.IgnoreCondition);
+    SetInvisible(AllPlayers(Team.All), InvisibleTo.None);
+    NextRound = true;
+    Round += 1;
+    Alive = 0;
+    LineSpeed = LineSpeedPrev;
+    LineSpeed += 0.1;
+    LineSpeedPrev = LineSpeed;
+    Wait(0.1, WaitBehavior.IgnoreCondition);
+    AllLivingPlayers(Team.All).Safe = false;
+    Wait(1, WaitBehavior.IgnoreCondition);
+    RandomOrbsF();
+    AllPlayers(Team.All).AtSafetyy = false;
+    Teleport(FilteredArray(AllLivingPlayers(Team.All), !IsDummyBot(ArrayElement())), Oppositesafety);
+    ClearStatus(AllLivingPlayers(Team.All), Status.Invincible);
+    ClearStatus(AllLivingPlayers(Team.All), Status.Rooted);
+    ClearStatus(AllLivingPlayers(Team.All), Status.PhasedOut);
+    AllowButton(AllPlayers(Team.All), Button.Melee);
+    RoundInProgress = true;
+    # bigMessage(getAllPlayers(), \"Dead Players are voting\")
+    VoteInProgress = true;
+}
+
+rule: "Player Died"
+Event.OnDeath
+{
+    # eventPlayer.startForcingHero(Hero.ZENYATTA)
+    Teleport(EventPlayer(), Vector(0, 0, 0));
+    DisableRespawning(EventPlayer());
+    EnableSpectate(EventPlayer());
+    Wait(0.25, WaitBehavior.IgnoreCondition);
+    isDeaad = true;
+    Safe = false;
+    ModifyPlayerScore(EventPlayer(), 1);
+}
+
+rule: "Game Restart"
+Event.OngoingPlayer
+if (Alive == 0)
+if (IsGameInProgress() == true)
+if (CountOf(FilteredArray(AllLivingPlayers(Team.All), !IsDummyBot(ArrayElement()))) == 0)
+{
+    # @Condition all([player.isDummy() == false for player in getLivingPlayers(Team.ALL)]) == 0
+    VoteInProgress = false;
+    RoundInProgress = false;
+    Wait(0.25, WaitBehavior.IgnoreCondition);
+    GameOver = true;
+    BigMessage(EventPlayer(), "Game Over!");
+    StopForcingHero(AllPlayers(Team.All));
+    ByeEffectsxoxo();
+    Wait(2, WaitBehavior.IgnoreCondition);
+    StopChasingVariable(LinePos);
+    GenjiUlt = 0;
+    MoiraUlt = 0;
+    LucioUlt = 0;
+    MeiUlt = 0;
+    SombraEMP = 0;
+    GenerateWalls = true;
+    LinePos = 10;
+    LineSpeed = 1;
+    LineSpeedPrev = LineSpeed;
+    Round = 1;
+    AllPlayers(Team.All).AtSafetyy = false;
+    AllPlayers(Team.All).Safe = true;
+    Respawn(AllPlayers(Team.All));
+    SetInvisible(AllPlayers(Team.All), InvisibleTo.None);
+    ForcePlayerHero(EventPlayer(), RandomValueInArray(AllowedHeroes(EventPlayer())));
+    DisallowButton(AllPlayers(Team.All), Button.Melee);
+    AllPlayers(Team.All).isDeaad = false;
+    BigMessage(EventPlayer(), "Loading");
+    Wait(3, WaitBehavior.IgnoreCondition);
+    GenerateWalls = false;
+    SetStatus(AllLivingPlayers(Team.All), null, Status.Rooted, 4.25);
+    Wait(0.25, WaitBehavior.IgnoreCondition);
+    Teleport(AllPlayers(Team.All), Vector(17, 50, 17));
+    SetMoveSpeed(AllPlayers(Team.All), 100);
+    BigMessage(EventPlayer(), "Race To The Other Side!");
+    # destroyAllDummies()
+    Wait(1, WaitBehavior.IgnoreCondition);
+    SmallMessage(EventPlayer(), "3");
+    Wait(1, WaitBehavior.IgnoreCondition);
+    SmallMessage(EventPlayer(), "2");
+    Wait(1, WaitBehavior.IgnoreCondition);
+    SmallMessage(EventPlayer(), "1");
+    Wait(1, WaitBehavior.IgnoreCondition);
+    SmallMessage(EventPlayer(), "GO!");
+    RandomOrbsF();
+    DeathDirec1();
+    AllPlayers(Team.All).Safe = false;
+    GameOver = false;
+    ClearStatus(AllLivingPlayers(Team.All), Status.Invincible);
+    ClearStatus(AllLivingPlayers(Team.All), Status.Rooted);
+    ClearStatus(AllLivingPlayers(Team.All), Status.PhasedOut);
+    AllowButton(AllPlayers(Team.All), Button.Melee);
+    RoundInProgress = true;
+}
+
+rule: "Player Win"
+if (CountOf(FilteredArray(AllLivingPlayers(Team.All), !IsDummyBot(ArrayElement()))) == 1)
+if (Alive == 1)
+{
+    GameOver = true;
+    ModifyPlayerScore(AllLivingPlayers(Team.All), 5);
+    BigMessage(AllPlayers(Team.All), <"<0> Wins!", FilteredArray(AllLivingPlayers(Team.All), !IsDummyBot(ArrayElement()))>);
+    # playEffect(getAllPlayers(), DynamicEffect.GOOD_EXPLOSION, Color.GREEN, getLivingPlayers(Team.ALL), 3)
+    PlayEffect(AllPlayers(Team.All), PlayEffect.GoodPickupEffect, Color.Green, FilteredArray(AllLivingPlayers(Team.All), !IsDummyBot(ArrayElement()))[0], 3);
+    RoundInProgress = false;
+    Wait(3, WaitBehavior.IgnoreCondition);
+    AllPlayers(Team.All).AtSafetyy = false;
+    Kill(AllLivingPlayers(Team.All), null);
+    AllLivingPlayers(Team.All).isDeaad = true;
+    Alive = 0;
+    AllLivingPlayers(Team.All).Safe = false;
+}
+
+rule: "Lines"
+{
+    RunText = "RUN";
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, LinePosXY1 + Vector(0, 0, LinePos) - Vector(1, 1, 0), LinePosXY1 + Vector(0, 9, LinePos) - Vector(1, 0, 0), Color.Red, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, LinePosXY2 + Vector(0, 0, LinePos) + Vector(1, 0, 0) - Vector(0, 1, 0), LinePosXY2 + Vector(0, 9, LinePos) + Vector(1, 0, 0), Color.Red, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, LinePosXY1 + Vector(0, 0, LinePos), LinePosXY2 + Vector(0, 0, LinePos), Color.Red, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, LinePosXY1 + Vector(0, 1, LinePos), LinePosXY2 + Vector(0, 1, LinePos), Color.Red, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, LinePosXY1 + Vector(0, 2, LinePos), LinePosXY2 + Vector(0, 2, LinePos), Color.Red, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, LinePosXY1 + Vector(0, 3, LinePos), LinePosXY2 + Vector(0, 3, LinePos), Color.Red, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, LinePosXY1 + Vector(0, 4, LinePos), LinePosXY2 + Vector(0, 4, LinePos), Color.Red, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, LinePosXY1 + Vector(0, 5, LinePos), LinePosXY2 + Vector(0, 5, LinePos), Color.Red, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, LinePosXY1 + Vector(0, 6, LinePos), LinePosXY2 + Vector(0, 6, LinePos), Color.Red, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, LinePosXY1 + Vector(0, 7, LinePos), LinePosXY2 + Vector(0, 7, LinePos), Color.Red, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(AllPlayers(Team.All), BeamType.BadBeam, LinePosXY1 + Vector(0, 8, LinePos), LinePosXY2 + Vector(0, 8, LinePos), Color.Red, EffectRev.VisibleToPositionAndRadius);
+    CreateInWorldText(AllPlayers(Team.All), <"<0>", RunText>, LinePosXY1 + Vector(-21, 3, LinePos), 2, Clipping.ClipAgainstSurfaces, InworldTextRev.VisibleToPositionAndString, Color.Red, Spectators.DefaultVisibility);
+    CreateEffect(AllPlayers(Team.All), Effect.LightShaft, Color.Green, Safety, 4, EffectRev.VisibleToPositionAndRadius);
+    CreateEffect(AllPlayers(Team.All), Effect.Ring, Color.Green, Safety, 4, EffectRev.VisibleToPositionAndRadius);
+    CreateInWorldText(AllPlayers(Team.All), "Reach Here!", Safety + Vector(0, 3, 0), 2, Clipping.ClipAgainstSurfaces, InworldTextRev.VisibleToPositionAndString, Color.Green, Spectators.DefaultVisibility);
+}
+
+void DeathDirec1() "Death Direc 1"
+{
+    LinePos = 10;
+    ChaseVariableAtRate(LinePos, -60, LineSpeed, RateChaseReevaluation.DestinationAndRate);
+}
+
+void DeathDirec2() "Death Direc 2"
+{
+    LinePos = -10;
+    ChaseVariableAtRate(LinePos, 60, LineSpeed, RateChaseReevaluation.DestinationAndRate);
+}
+
+void RoundSpeed1() "RoundEndSpeed1"
+{
+    StopChasingVariable(LinePos);
+    MinWait();
+    ChaseVariableOverTime(LinePos, Vector(0, 30, 0), 1, TimeChaseReevaluation.DestinationAndDuration);
+}
+
+void RoundSpeed2() "RoundEndSpeed2"
+{
+    StopChasingVariable(LinePos);
+    MinWait();
+    ChaseVariableOverTime(LinePos, Vector(0, -30, 0), 1, TimeChaseReevaluation.DestinationAndDuration);
+}
+
+rule: "Kill Wall Odd"
+Event.OngoingPlayer
+if (ZOf(PositionOf(EventPlayer())) > LinePos + 30)
+if (Direct1 == true)
+if (Safe == false)
+{
+    Kill(EventPlayer(), null);
+}
+
+rule: "Kill Wall Even"
+Event.OngoingPlayer
+if (ZOf(PositionOf(EventPlayer())) < LinePos + -30)
+if (Direct2 == true)
+if (Safe == false)
+{
+    Kill(EventPlayer(), null);
+}
+
+rule: "Random Select traps Round 2"
+if (Round == 2)
+{
+    Wait(1.001, WaitBehavior.IgnoreCondition);
+    Traps2 = RandomInteger(1, 3);
+}
+
+rule: "Random Select traps Round 3"
+if (Round == 3)
+{
+    Wait(1.001, WaitBehavior.IgnoreCondition);
+    Traps2 = RandomInteger(1, 3);
+    Wait(1, WaitBehavior.IgnoreCondition);
+    Traps3 = RandomInteger(1, 5);
+}
+
+rule: "Random Select traps Round 4+"
+if (Round > 3)
+if (NextRound == true)
+{
+    Wait(1.001, WaitBehavior.IgnoreCondition);
+    Traps1 = RandomInteger(1, 5);
+    Wait(1, WaitBehavior.IgnoreCondition);
+    Traps2 = RandomInteger(1, 3);
+    Wait(1, WaitBehavior.IgnoreCondition);
+    Traps3 = RandomInteger(1, 5);
+    NextRound = false;
+    MinWait();
+}
+
+void ByeEffectsxoxo() "Delete effects + Dummy"
+{
+    Traps1 = 0;
+    Traps2 = 0;
+    Traps3 = 0;
+    StopChasingVariable(TrapZPos1);
+    StopChasingVariable(TrapZPos2);
+    StopChasingVariable(TrapZPos3);
+    StopChasingVariable(TrapXPos1);
+    StopChasingVariable(TrapXPos2);
+    StopChasingVariable(TrapXPos3);
+    StopChasingVariable(Trap1pos);
+    StopChasingVariable(Trap2pos);
+    StopChasingVariable(Trap3pos);
+    Trap1pos = 0;
+    Trap2pos = 0;
+    Trap3pos = 0;
+    TrapZPos1 = 0;
+    TrapZPos2 = 0;
+    TrapZPos3 = 0;
+    TrapXPos1 = 0;
+    TrapXPos2 = 0;
+    TrapXPos3 = 0;
+    DestroyAllDummyBots();
+    DestroyEffect(EffectID[1]);
+    DestroyEffect(EffectID[2]);
+    DestroyEffect(EffectID[3]);
+    DestroyEffect(EffectID[4]);
+    DestroyEffect(EffectID[5]);
+    DestroyEffect(EffectID[6]);
+    DestroyEffect(EffectID[7]);
+    DestroyEffect(EffectID[8]);
+    DestroyEffect(EffectID[9]);
+    DestroyEffect(EffectID[10]);
+    DestroyEffect(EffectID[11]);
+    DestroyEffect(EffectID[12]);
+    DestroyEffect(EffectID[13]);
+    DestroyEffect(EffectID[14]);
+    DestroyEffect(EffectID[15]);
+    DestroyEffect(EffectID[20]);
+    DestroyEffect(EffectID[21]);
+    DestroyEffect(EffectID[22]);
+    DestroyEffect(EffectID[23]);
+    DestroyEffect(EffectID[24]);
+    DestroyEffect(EffectID[25]);
+    EffectID = 0;
+    Wait(0.25, WaitBehavior.IgnoreCondition);
+}
+
+rule: "Big Balls Of Death 1"
+if (Traps1 == 1)
+{
+    if (WallsRandom[1] == 1)
+    {
+        Trap1pos = 47;
+        TrapXPos1 = 0;
+        TrapZPos1 = 8.5;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos1, Trap1pos, TrapZPos1), 3.8, EffectRev.VisibleToPositionAndRadius);
+        EffectID[1] = LastCreatedEntity();
+        CreateEffect(AllPlayers(Team.All), Effect.Orb, Color.Red, Vector(TrapXPos1, Trap1pos, TrapZPos1), 3, EffectRev.VisibleToPositionAndRadius);
+        EffectID[2] = LastCreatedEntity();
+        while (Traps1 == 1 && WallsRandom[1] == 1)
+        {
+            ChaseVariableAtRate(Trap1pos, 55, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2.5, WaitBehavior.AbortWhenFalse);
+            ChaseVariableAtRate(Trap1pos, 47, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 2)
+    {
+        Trap1pos = 47;
+        TrapXPos1 = 17;
+        TrapZPos1 = -4.25;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos1, Trap1pos, TrapZPos1), 3.8, EffectRev.VisibleToPositionAndRadius);
+        EffectID[1] = LastCreatedEntity();
+        CreateEffect(AllPlayers(Team.All), Effect.Orb, Color.Red, Vector(TrapXPos1, Trap1pos, TrapZPos1), 3, EffectRev.VisibleToPositionAndRadius);
+        EffectID[2] = LastCreatedEntity();
+        while (Traps1 == 1 && WallsRandom[1] == 2)
+        {
+            ChaseVariableAtRate(Trap1pos, 55, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2.5, WaitBehavior.AbortWhenFalse);
+            ChaseVariableAtRate(Trap1pos, 47, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 3)
+    {
+        Trap1pos = 47;
+        TrapXPos1 = 0;
+        TrapZPos1 = 4.25;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos1, Trap1pos, TrapZPos1), 3.8, EffectRev.VisibleToPositionAndRadius);
+        EffectID[1] = LastCreatedEntity();
+        CreateEffect(AllPlayers(Team.All), Effect.Orb, Color.Red, Vector(TrapXPos1, Trap1pos, TrapZPos1), 3, EffectRev.VisibleToPositionAndRadius);
+        EffectID[2] = LastCreatedEntity();
+        while (Traps1 == 1 && WallsRandom[1] == 3)
+        {
+            ChaseVariableAtRate(Trap1pos, 55, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2.5, WaitBehavior.AbortWhenFalse);
+            ChaseVariableAtRate(Trap1pos, 47, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 4)
+    {
+        Trap1pos = 47;
+        TrapXPos1 = -17;
+        TrapZPos1 = 8.5;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos1, Trap1pos, TrapZPos1), 3.8, EffectRev.VisibleToPositionAndRadius);
+        EffectID[1] = LastCreatedEntity();
+        CreateEffect(AllPlayers(Team.All), Effect.Orb, Color.Red, Vector(TrapXPos1, Trap1pos, TrapZPos1), 3, EffectRev.VisibleToPositionAndRadius);
+        EffectID[2] = LastCreatedEntity();
+        while (Traps1 == 1 && WallsRandom[1] == 4)
+        {
+            ChaseVariableAtRate(Trap1pos, 55, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2.5, WaitBehavior.AbortWhenFalse);
+            ChaseVariableAtRate(Trap1pos, 47, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+}
+
+rule: "Big Balls Of Death Damage 1"
+Event.OngoingPlayer
+if (Traps1 == 1)
+if (DistanceBetween(EventPlayer(), Vector(TrapXPos1, Trap1pos, TrapZPos1)) <= 4)
+{
+    Damage(EventPlayer(), null, 50);
+    SetStatus(EventPlayer(), null, Status.Asleep, 2);
+    Wait(4, WaitBehavior.IgnoreCondition);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Tracer 1"
+if (Traps1 == 2)
+{
+    if (WallsRandom[1] == 1)
+    {
+        Trap1pos = 47;
+        TrapXPos1 = 0;
+        TrapZPos1 = 8.5;
+        # wait(1)
+        CreateDummyBot(Hero.Tracer, Team.All, 10, Vector(TrapXPos1, Trap1pos, TrapZPos1), Vector(0, 0, 0));
+        EffectID[3] = LastCreatedEntity();
+        # EffectID[3].setStatusEffect(null, Status.PHASED_OUT, 9999)
+        StartHoldingButton(EffectID[3], Button.PrimaryFire);
+        while (Traps1 == 2 && WallsRandom[1] == 1)
+        {
+            StartFacing(EffectID[3], DirectionFromAngles(0, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            SetUltimateCharge(EffectID[3], 100);
+            SetUltimateAbilityEnabled(EffectID[3], true);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+            StartFacing(EffectID[3], DirectionFromAngles(90, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            PressButton(EffectID[3], Button.Ultimate);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+            StartFacing(EffectID[3], DirectionFromAngles(180, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+            StartFacing(EffectID[3], DirectionFromAngles(270, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 2)
+    {
+        Trap1pos = 47;
+        TrapXPos1 = 17;
+        TrapZPos1 = -4.25;
+        # wait(1)
+        CreateDummyBot(Hero.Tracer, Team.All, 10, Vector(TrapXPos1, Trap1pos, TrapZPos1), Vector(0, 0, 0));
+        EffectID[3] = LastCreatedEntity();
+        # EffectID[3].setStatusEffect(null, Status.PHASED_OUT, 9999)
+        StartHoldingButton(EffectID[3], Button.PrimaryFire);
+        while (Traps1 == 2 && WallsRandom[1] == 2)
+        {
+            StartFacing(EffectID[3], DirectionFromAngles(0, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            SetUltimateCharge(EffectID[3], 100);
+            SetUltimateAbilityEnabled(EffectID[3], true);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+            StartFacing(EffectID[3], DirectionFromAngles(90, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            PressButton(EffectID[3], Button.Ultimate);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+            StartFacing(EffectID[3], DirectionFromAngles(180, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+            StartFacing(EffectID[3], DirectionFromAngles(270, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 3)
+    {
+        Trap1pos = 47;
+        TrapXPos1 = 0;
+        TrapZPos1 = 4.25;
+        # wait(1)
+        CreateDummyBot(Hero.Tracer, Team.All, 10, Vector(TrapXPos1, Trap1pos, TrapZPos1), Vector(0, 0, 0));
+        EffectID[3] = LastCreatedEntity();
+        # EffectID[3].setStatusEffect(null, Status.PHASED_OUT, 9999)
+        StartHoldingButton(EffectID[3], Button.PrimaryFire);
+        while (Traps1 == 2 && WallsRandom[1] == 3)
+        {
+            StartFacing(EffectID[3], DirectionFromAngles(0, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            SetUltimateCharge(EffectID[3], 100);
+            SetUltimateAbilityEnabled(EffectID[3], true);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+            StartFacing(EffectID[3], DirectionFromAngles(90, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            PressButton(EffectID[3], Button.Ultimate);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+            StartFacing(EffectID[3], DirectionFromAngles(180, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+            StartFacing(EffectID[3], DirectionFromAngles(270, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 4)
+    {
+        Trap1pos = 47;
+        TrapXPos1 = -17;
+        TrapZPos1 = 8.5;
+        # wait(1)
+        CreateDummyBot(Hero.Tracer, Team.All, 10, Vector(TrapXPos1, Trap1pos, TrapZPos1), Vector(0, 0, 0));
+        EffectID[3] = LastCreatedEntity();
+        # EffectID[3].setStatusEffect(null, Status.PHASED_OUT, 9999)
+        StartHoldingButton(EffectID[3], Button.PrimaryFire);
+        while (Traps1 == 2 && WallsRandom[1] == 4)
+        {
+            StartFacing(EffectID[3], DirectionFromAngles(0, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            SetUltimateCharge(EffectID[3], 100);
+            SetUltimateAbilityEnabled(EffectID[3], true);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+            StartFacing(EffectID[3], DirectionFromAngles(90, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            PressButton(EffectID[3], Button.Ultimate);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+            StartFacing(EffectID[3], DirectionFromAngles(180, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+            StartFacing(EffectID[3], DirectionFromAngles(270, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+}
+
+rule: "Tracer Damage"
+Event.OnDamageTaken
+if (IsDummyBot(Attacker()) == Hero.Tracer)
+if (IsDummyBot(Victim()) == false)
+{
+    SetStatus(Victim(), null, Status.Stunned, 1);
+    Wait(1, WaitBehavior.AbortWhenFalse);
+}
+
+rule: "Cassidy Bang 1"
+if (Traps1 == 3)
+{
+    if (WallsRandom[1] == 1)
+    {
+        Trap1pos = 47;
+        TrapXPos1 = 0;
+        TrapZPos1 = 8.5;
+        # wait(1, Wait.ABORT_WHEN_FALSE)
+        CreateDummyBot(Hero.Cassidy, Team.All, 10, Vector(TrapXPos1, Trap1pos, TrapZPos1), DirectionFromAngles(0, 0));
+        EffectID[4] = LastCreatedEntity();
+        StartFacing(EffectID[4], DirectionFromAngles(0, 90), 100, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+        # EffectID[4].setStatusEffect(null, Status.PHASED_OUT, 9999)
+        while (Traps1 == 3 && WallsRandom[1] == 1)
+        {
+            PressButton(EffectID[4], Button.Ability2);
+            Wait(1.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 2)
+    {
+        Trap1pos = 47;
+        TrapXPos1 = 17;
+        TrapZPos1 = -4.25;
+        # wait(1, Wait.ABORT_WHEN_FALSE)
+        CreateDummyBot(Hero.Cassidy, Team.All, 10, Vector(TrapXPos1, Trap1pos, TrapZPos1), DirectionFromAngles(0, 0));
+        EffectID[4] = LastCreatedEntity();
+        StartFacing(EffectID[4], DirectionFromAngles(0, 90), 100, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+        # EffectID[4].setStatusEffect(null, Status.PHASED_OUT, 9999)
+        while (Traps1 == 3 && WallsRandom[1] == 2)
+        {
+            PressButton(EffectID[4], Button.Ability2);
+            Wait(1.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 3)
+    {
+        Trap1pos = 47;
+        TrapXPos1 = 0;
+        TrapZPos1 = 4.25;
+        # wait(1, Wait.ABORT_WHEN_FALSE)
+        CreateDummyBot(Hero.Cassidy, Team.All, 10, Vector(TrapXPos1, Trap1pos, TrapZPos1), DirectionFromAngles(0, 0));
+        EffectID[4] = LastCreatedEntity();
+        StartFacing(EffectID[4], DirectionFromAngles(0, 90), 100, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+        # EffectID[4].setStatusEffect(null, Status.PHASED_OUT, 9999)
+        while (Traps1 == 3 && WallsRandom[1] == 3)
+        {
+            PressButton(EffectID[4], Button.Ability2);
+            Wait(1.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 4)
+    {
+        Trap1pos = 47;
+        TrapXPos1 = -17;
+        TrapZPos1 = 8.5;
+        # wait(1, Wait.ABORT_WHEN_FALSE)
+        CreateDummyBot(Hero.Cassidy, Team.All, 10, Vector(TrapXPos1, Trap1pos, TrapZPos1), DirectionFromAngles(0, 0));
+        EffectID[4] = LastCreatedEntity();
+        StartFacing(EffectID[4], DirectionFromAngles(0, 90), 100, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+        # EffectID[4].setStatusEffect(null, Status.PHASED_OUT, 9999)
+        while (Traps1 == 3 && WallsRandom[1] == 4)
+        {
+            PressButton(EffectID[4], Button.Ability2);
+            Wait(1.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+}
+
+rule: "Red Ball Horizontal 1"
+if (Traps1 == 4)
+{
+    if (WallsRandom[1] == 1)
+    {
+        Trap1pos = 47;
+        TrapXPos1 = 0;
+        TrapZPos1 = 8;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos1, Trap1pos, TrapZPos1), 2, EffectRev.VisibleToPositionAndRadius);
+        EffectID[5] = LastCreatedEntity();
+        while (Traps1 == 4 && WallsRandom[1] == 1)
+        {
+            ChaseVariableOverTime(TrapZPos1, 4, 1, TimeChaseReevaluation.DestinationAndDuration);
+            Wait(1, WaitBehavior.AbortWhenFalse);
+            ChaseVariableOverTime(TrapZPos1, 12, 1, TimeChaseReevaluation.DestinationAndDuration);
+            Wait(1, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 2)
+    {
+        Trap1pos = 47;
+        TrapXPos1 = 17;
+        TrapZPos1 = -4.25;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos1, Trap1pos, TrapZPos1), 2, EffectRev.VisibleToPositionAndRadius);
+        EffectID[5] = LastCreatedEntity();
+        while (Traps1 == 4 && WallsRandom[1] == 2)
+        {
+            ChaseVariableOverTime(TrapXPos1, 21, 1, TimeChaseReevaluation.DestinationAndDuration);
+            Wait(1, WaitBehavior.AbortWhenFalse);
+            ChaseVariableOverTime(TrapXPos1, 12.75, 1, TimeChaseReevaluation.DestinationAndDuration);
+            Wait(1, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 3)
+    {
+        Trap1pos = 47;
+        TrapXPos1 = 0;
+        TrapZPos1 = 4.25;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos1, Trap1pos, TrapZPos1), 2, EffectRev.VisibleToPositionAndRadius);
+        EffectID[5] = LastCreatedEntity();
+        while (Traps1 == 4 && WallsRandom[1] == 3)
+        {
+            ChaseVariableOverTime(TrapXPos1, 4.25, 1, TimeChaseReevaluation.DestinationAndDuration);
+            Wait(1, WaitBehavior.AbortWhenFalse);
+            ChaseVariableOverTime(TrapXPos1, -4.25, 1, TimeChaseReevaluation.DestinationAndDuration);
+            Wait(1, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 4)
+    {
+        Trap1pos = 47;
+        TrapXPos1 = -17;
+        TrapZPos1 = 8;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos1, Trap1pos, TrapZPos1), 2, EffectRev.VisibleToPositionAndRadius);
+        EffectID[5] = LastCreatedEntity();
+        while (Traps1 == 4 && WallsRandom[1] == 4)
+        {
+            ChaseVariableOverTime(TrapXPos1, -12.75, 1, TimeChaseReevaluation.DestinationAndDuration);
+            Wait(1, WaitBehavior.AbortWhenFalse);
+            ChaseVariableOverTime(TrapXPos1, -21, 1, TimeChaseReevaluation.DestinationAndDuration);
+            Wait(1, WaitBehavior.AbortWhenFalse);
+        }
+    }
+}
+
+rule: "Red Ball Horizontal Damage 1"
+Event.OngoingPlayer
+if (Traps1 == 4)
+if (DistanceBetween(EventPlayer(), Vector(TrapXPos1, Trap1pos, TrapZPos1)) <= 2.1)
+{
+    Damage(EventPlayer(), null, 50);
+    SetStatus(EventPlayer(), null, Status.Asleep, 2);
+    Wait(4, WaitBehavior.IgnoreCondition);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Growing Ball 1"
+if (Traps1 == 5)
+{
+    if (WallsRandom[1] == 1)
+    {
+        Trap1pos = 48;
+        TrapXPos1 = 0;
+        TrapZPos1 = 4.2;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos1, Trap1pos, 8.5), TrapZPos1, EffectRev.VisibleToPositionAndRadius);
+        EffectID[20] = LastCreatedEntity();
+        CreateEffect(AllPlayers(Team.All), Effect.Orb, Color.Red, Vector(TrapXPos1, Trap1pos, 8.5), TrapZPos1, EffectRev.VisibleToPositionAndRadius);
+        EffectID[21] = LastCreatedEntity();
+        while (Traps1 == 5 && WallsRandom[1] == 1)
+        {
+            ChaseVariableAtRate(TrapZPos1, 0, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2, WaitBehavior.AbortWhenFalse);
+            ChaseVariableAtRate(TrapZPos1, 4.2, 5, RateChaseReevaluation.DestinationAndRate);
+            Wait(1.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 2)
+    {
+        Trap1pos = 48;
+        TrapXPos1 = 17;
+        TrapZPos1 = 4.2;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos1, Trap1pos, -4.25), TrapZPos1, EffectRev.VisibleToPositionAndRadius);
+        EffectID[20] = LastCreatedEntity();
+        CreateEffect(AllPlayers(Team.All), Effect.Orb, Color.Red, Vector(TrapXPos1, Trap1pos, -4.25), TrapZPos1, EffectRev.VisibleToPositionAndRadius);
+        EffectID[21] = LastCreatedEntity();
+        while (Traps1 == 5 && WallsRandom[1] == 2)
+        {
+            ChaseVariableAtRate(TrapZPos1, 0, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2, WaitBehavior.AbortWhenFalse);
+            ChaseVariableAtRate(TrapZPos1, 4.2, 5, RateChaseReevaluation.DestinationAndRate);
+            Wait(1.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 3)
+    {
+        Trap1pos = 48;
+        TrapXPos1 = 0;
+        TrapZPos1 = 4.2;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos1, Trap1pos, 4.25), TrapZPos1, EffectRev.VisibleToPositionAndRadius);
+        EffectID[20] = LastCreatedEntity();
+        CreateEffect(AllPlayers(Team.All), Effect.Orb, Color.Red, Vector(TrapXPos1, Trap1pos, 4.25), TrapZPos1, EffectRev.VisibleToPositionAndRadius);
+        EffectID[21] = LastCreatedEntity();
+        while (Traps1 == 5 && WallsRandom[1] == 3)
+        {
+            ChaseVariableAtRate(TrapZPos1, 0, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2, WaitBehavior.AbortWhenFalse);
+            ChaseVariableAtRate(TrapZPos1, 4.2, 5, RateChaseReevaluation.DestinationAndRate);
+            Wait(1.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 4)
+    {
+        Trap1pos = 48;
+        TrapXPos1 = -17;
+        TrapZPos1 = 4.2;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos1, Trap1pos, 8.5), TrapZPos1, EffectRev.VisibleToPositionAndRadius);
+        EffectID[20] = LastCreatedEntity();
+        CreateEffect(AllPlayers(Team.All), Effect.Orb, Color.Red, Vector(TrapXPos1, Trap1pos, 8.5), TrapZPos1, EffectRev.VisibleToPositionAndRadius);
+        EffectID[21] = LastCreatedEntity();
+        while (Traps1 == 5 && WallsRandom[1] == 4)
+        {
+            ChaseVariableAtRate(TrapZPos1, 0, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2, WaitBehavior.AbortWhenFalse);
+            ChaseVariableAtRate(TrapZPos1, 4.2, 5, RateChaseReevaluation.DestinationAndRate);
+            Wait(1.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+}
+
+rule: "Growing Ball Damage 1"
+Event.OngoingPlayer
+if (Traps1 == 5)
+if (WallsRandom[1] == 1)
+if (DistanceBetween(EventPlayer(), Vector(TrapXPos1, Trap1pos, 8.5)) <= TrapZPos1 + 0.2)
+{
+    Damage(EventPlayer(), null, 50);
+    SetStatus(EventPlayer(), null, Status.Asleep, 2);
+    Wait(4, WaitBehavior.AbortWhenFalse);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Growing Ball Damage 1 2"
+Event.OngoingPlayer
+if (Traps1 == 5)
+if (WallsRandom[1] == 2)
+if (DistanceBetween(EventPlayer(), Vector(TrapXPos1, Trap1pos, -4.25)) <= TrapZPos1 + 0.2)
+{
+    Damage(EventPlayer(), null, 50);
+    SetStatus(EventPlayer(), null, Status.Asleep, 2);
+    Wait(4, WaitBehavior.AbortWhenFalse);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Growing Ball Damage 1 3"
+Event.OngoingPlayer
+if (Traps1 == 5)
+if (WallsRandom[1] == 3)
+if (DistanceBetween(EventPlayer(), Vector(TrapXPos1, Trap1pos, 4.25)) <= TrapZPos1 + 0.2)
+{
+    Damage(EventPlayer(), null, 50);
+    SetStatus(EventPlayer(), null, Status.Asleep, 2);
+    Wait(4, WaitBehavior.AbortWhenFalse);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Growing Ball Damage 1 4"
+Event.OngoingPlayer
+if (Traps1 == 5)
+if (WallsRandom[1] == 4)
+if (DistanceBetween(EventPlayer(), Vector(TrapXPos1, Trap1pos, 8.5)) <= TrapZPos1 + 0.2)
+{
+    Damage(EventPlayer(), null, 50);
+    SetStatus(EventPlayer(), null, Status.Asleep, 2);
+    Wait(4, WaitBehavior.AbortWhenFalse);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Big Balls Of Death 2"
+if (Traps2 == 1)
+{
+    if (WallsRandom[1] == 1)
+    {
+        Trap2pos = 47;
+        TrapXPos2 = 0;
+        TrapZPos2 = 0;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos2, Trap2pos, TrapZPos2), 3.8, EffectRev.VisibleToPositionAndRadius);
+        EffectID[6] = LastCreatedEntity();
+        CreateEffect(AllPlayers(Team.All), Effect.Orb, Color.Red, Vector(TrapXPos2, Trap2pos, TrapZPos2), 3, EffectRev.VisibleToPositionAndRadius);
+        EffectID[7] = LastCreatedEntity();
+        while (Traps2 == 1 && WallsRandom[1] == 1)
+        {
+            ChaseVariableAtRate(Trap2pos, 55, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2.5, WaitBehavior.AbortWhenFalse);
+            ChaseVariableAtRate(Trap2pos, 47, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 2)
+    {
+        Trap2pos = 47;
+        TrapXPos2 = 0;
+        TrapZPos2 = 8.5;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos2, Trap2pos, TrapZPos2), 3.8, EffectRev.VisibleToPositionAndRadius);
+        EffectID[6] = LastCreatedEntity();
+        CreateEffect(AllPlayers(Team.All), Effect.Orb, Color.Red, Vector(TrapXPos2, Trap2pos, TrapZPos2), 3, EffectRev.VisibleToPositionAndRadius);
+        EffectID[7] = LastCreatedEntity();
+        while (Traps2 == 1 && WallsRandom[1] == 2)
+        {
+            ChaseVariableAtRate(Trap2pos, 55, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2.5, WaitBehavior.AbortWhenFalse);
+            ChaseVariableAtRate(Trap2pos, 47, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 3)
+    {
+        Trap2pos = 47;
+        TrapXPos2 = 17;
+        TrapZPos2 = -8.5;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos2, Trap2pos, TrapZPos2), 3.8, EffectRev.VisibleToPositionAndRadius);
+        EffectID[6] = LastCreatedEntity();
+        CreateEffect(AllPlayers(Team.All), Effect.Orb, Color.Red, Vector(TrapXPos2, Trap2pos, TrapZPos2), 3, EffectRev.VisibleToPositionAndRadius);
+        EffectID[7] = LastCreatedEntity();
+        while (Traps2 == 1 && WallsRandom[1] == 3)
+        {
+            ChaseVariableAtRate(Trap2pos, 55, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2.5, WaitBehavior.AbortWhenFalse);
+            ChaseVariableAtRate(Trap2pos, 47, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 4)
+    {
+        Trap2pos = 47;
+        TrapXPos2 = 17;
+        TrapZPos2 = -8.5;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos2, Trap2pos, TrapZPos2), 3.8, EffectRev.VisibleToPositionAndRadius);
+        EffectID[6] = LastCreatedEntity();
+        CreateEffect(AllPlayers(Team.All), Effect.Orb, Color.Red, Vector(TrapXPos2, Trap2pos, TrapZPos2), 3, EffectRev.VisibleToPositionAndRadius);
+        EffectID[7] = LastCreatedEntity();
+        while (Traps2 == 1 && WallsRandom[1] == 4)
+        {
+            ChaseVariableAtRate(Trap2pos, 55, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2.5, WaitBehavior.AbortWhenFalse);
+            ChaseVariableAtRate(Trap2pos, 47, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+}
+
+rule: "Big Balls Of Death Damage 2"
+Event.OngoingPlayer
+if (Traps2 == 1)
+if (DistanceBetween(EventPlayer(), Vector(TrapXPos2, Trap2pos, TrapZPos2)) <= 4)
+{
+    Damage(EventPlayer(), null, 50);
+    SetStatus(EventPlayer(), null, Status.Asleep, 2);
+    Wait(4, WaitBehavior.AbortWhenFalse);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Growing Ball 2"
+if (Traps2 == 3)
+{
+    if (WallsRandom[1] == 1)
+    {
+        Trap2pos = 48;
+        TrapXPos2 = 0;
+        TrapZPos2 = 4.2;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos2, Trap2pos, 0), TrapZPos2, EffectRev.VisibleToPositionAndRadius);
+        EffectID[22] = LastCreatedEntity();
+        CreateEffect(AllPlayers(Team.All), Effect.Orb, Color.Red, Vector(TrapXPos2, Trap2pos, 0), TrapZPos2, EffectRev.VisibleToPositionAndRadius);
+        EffectID[23] = LastCreatedEntity();
+        while (Traps2 == 3 && WallsRandom[1] == 1)
+        {
+            ChaseVariableAtRate(TrapZPos2, 0, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2, WaitBehavior.AbortWhenFalse);
+            ChaseVariableAtRate(TrapZPos2, 4.2, 5, RateChaseReevaluation.DestinationAndRate);
+            Wait(1.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 2)
+    {
+        Trap2pos = 48;
+        TrapXPos2 = 0;
+        TrapZPos2 = 4.2;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos2, Trap2pos, 8.5), TrapZPos2, EffectRev.VisibleToPositionAndRadius);
+        EffectID[22] = LastCreatedEntity();
+        CreateEffect(AllPlayers(Team.All), Effect.Orb, Color.Red, Vector(TrapXPos2, Trap2pos, 8.5), TrapZPos2, EffectRev.VisibleToPositionAndRadius);
+        EffectID[23] = LastCreatedEntity();
+        while (Traps2 == 3 && WallsRandom[1] == 2)
+        {
+            ChaseVariableAtRate(TrapZPos2, 0, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2, WaitBehavior.AbortWhenFalse);
+            ChaseVariableAtRate(TrapZPos2, 4.2, 5, RateChaseReevaluation.DestinationAndRate);
+            Wait(1.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 3)
+    {
+        Trap2pos = 48;
+        TrapXPos2 = 17;
+        TrapZPos2 = 4.2;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos2, Trap2pos, -8.5), TrapZPos2, EffectRev.VisibleToPositionAndRadius);
+        EffectID[22] = LastCreatedEntity();
+        CreateEffect(AllPlayers(Team.All), Effect.Orb, Color.Red, Vector(TrapXPos2, Trap2pos, -8.5), TrapZPos2, EffectRev.VisibleToPositionAndRadius);
+        EffectID[23] = LastCreatedEntity();
+        while (Traps2 == 3 && WallsRandom[1] == 3)
+        {
+            ChaseVariableAtRate(TrapZPos2, 0, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2, WaitBehavior.AbortWhenFalse);
+            ChaseVariableAtRate(TrapZPos2, 4.2, 5, RateChaseReevaluation.DestinationAndRate);
+            Wait(1.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 4)
+    {
+        Trap2pos = 48;
+        TrapXPos2 = 17;
+        TrapZPos2 = 4.2;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos2, Trap2pos, -8.5), TrapZPos2, EffectRev.VisibleToPositionAndRadius);
+        EffectID[22] = LastCreatedEntity();
+        CreateEffect(AllPlayers(Team.All), Effect.Orb, Color.Red, Vector(TrapXPos2, Trap2pos, -8.5), TrapZPos2, EffectRev.VisibleToPositionAndRadius);
+        EffectID[23] = LastCreatedEntity();
+        while (Traps2 == 3 && WallsRandom[1] == 4)
+        {
+            ChaseVariableAtRate(TrapZPos2, 0, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2, WaitBehavior.AbortWhenFalse);
+            ChaseVariableAtRate(TrapZPos2, 4.2, 5, RateChaseReevaluation.DestinationAndRate);
+            Wait(1.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+}
+
+rule: "Growing Ball Damage 2"
+Event.OngoingPlayer
+if (Traps2 == 3)
+if (WallsRandom[1] == 1)
+if (DistanceBetween(EventPlayer(), Vector(TrapXPos2, Trap2pos, 0)) <= TrapZPos2 + 0.2)
+{
+    Damage(EventPlayer(), null, 50);
+    SetStatus(EventPlayer(), null, Status.Asleep, 2);
+    Wait(4, WaitBehavior.AbortWhenFalse);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Growing Ball Damage 2 2"
+Event.OngoingPlayer
+if (Traps2 == 3)
+if (WallsRandom[1] == 2)
+if (DistanceBetween(EventPlayer(), Vector(TrapXPos2, Trap2pos, 8.5)) <= TrapZPos2 + 0.2)
+{
+    Damage(EventPlayer(), null, 50);
+    SetStatus(EventPlayer(), null, Status.Asleep, 2);
+    Wait(4, WaitBehavior.AbortWhenFalse);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Growing Ball Damage 2 3"
+Event.OngoingPlayer
+if (Traps2 == 3)
+if (WallsRandom[1] == 3)
+if (DistanceBetween(EventPlayer(), Vector(TrapXPos2, Trap2pos, -8.5)) <= TrapZPos2 + 0.2)
+{
+    Damage(EventPlayer(), null, 50);
+    SetStatus(EventPlayer(), null, Status.Asleep, 2);
+    Wait(4, WaitBehavior.AbortWhenFalse);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Growing Ball Damage 2 4"
+Event.OngoingPlayer
+if (Traps2 == 3)
+if (WallsRandom[1] == 4)
+if (DistanceBetween(EventPlayer(), Vector(TrapXPos2, Trap2pos, -8.5)) <= TrapZPos2 + 0.2)
+{
+    Damage(EventPlayer(), null, 50);
+    SetStatus(EventPlayer(), null, Status.Asleep, 2);
+    Wait(4, WaitBehavior.AbortWhenFalse);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Red Ball Horizontal 2"
+if (Traps2 == 2)
+{
+    if (WallsRandom[1] == 1)
+    {
+        Trap2pos = 47;
+        TrapXPos2 = 0;
+        TrapZPos2 = 0;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos2, Trap2pos, TrapZPos2), 2, EffectRev.VisibleToPositionAndRadius);
+        EffectID[8] = LastCreatedEntity();
+        while (Traps2 == 2 && WallsRandom[1] == 1)
+        {
+            ChaseVariableOverTime(TrapZPos2, 4, 1, TimeChaseReevaluation.DestinationAndDuration);
+            Wait(1, WaitBehavior.AbortWhenFalse);
+            ChaseVariableOverTime(TrapZPos2, -4, 1, TimeChaseReevaluation.DestinationAndDuration);
+            Wait(1, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 2)
+    {
+        Trap2pos = 47;
+        TrapXPos2 = 0;
+        TrapZPos2 = 8.5;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos2, Trap2pos, TrapZPos2), 2, EffectRev.VisibleToPositionAndRadius);
+        EffectID[8] = LastCreatedEntity();
+        while (Traps2 == 2 && WallsRandom[1] == 2)
+        {
+            ChaseVariableOverTime(TrapZPos2, 4.25, 1, TimeChaseReevaluation.DestinationAndDuration);
+            Wait(1, WaitBehavior.AbortWhenFalse);
+            ChaseVariableOverTime(TrapZPos2, 12.75, 1, TimeChaseReevaluation.DestinationAndDuration);
+            Wait(1, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 3)
+    {
+        Trap2pos = 47;
+        TrapXPos2 = 17;
+        TrapZPos2 = -8.5;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos2, Trap2pos, TrapZPos2), 2, EffectRev.VisibleToPositionAndRadius);
+        EffectID[8] = LastCreatedEntity();
+        while (Traps2 == 2 && WallsRandom[1] == 3)
+        {
+            ChaseVariableOverTime(TrapXPos2, 12.75, 1, TimeChaseReevaluation.DestinationAndDuration);
+            Wait(1, WaitBehavior.AbortWhenFalse);
+            ChaseVariableOverTime(TrapXPos2, 21, 1, TimeChaseReevaluation.DestinationAndDuration);
+            Wait(1, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 4)
+    {
+        Trap2pos = 47;
+        TrapXPos2 = 17;
+        TrapZPos2 = -8.5;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos2, Trap2pos, TrapZPos2), 2, EffectRev.VisibleToPositionAndRadius);
+        EffectID[8] = LastCreatedEntity();
+        while (Traps2 == 2 && WallsRandom[1] == 4)
+        {
+            ChaseVariableOverTime(TrapXPos2, 12.75, 1, TimeChaseReevaluation.DestinationAndDuration);
+            Wait(1, WaitBehavior.AbortWhenFalse);
+            ChaseVariableOverTime(TrapXPos2, 21, 1, TimeChaseReevaluation.DestinationAndDuration);
+            Wait(1, WaitBehavior.AbortWhenFalse);
+        }
+    }
+}
+
+rule: "Red Ball Horizontal Damage 2"
+Event.OngoingPlayer
+if (Traps2 == 2)
+if (DistanceBetween(EventPlayer(), Vector(TrapXPos2, Trap2pos, TrapZPos2)) <= 2.1)
+{
+    Damage(EventPlayer(), null, 50);
+    SetStatus(EventPlayer(), null, Status.Asleep, 2);
+    Wait(4, WaitBehavior.IgnoreCondition);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Big Balls Of Death 3"
+if (Traps3 == 1)
+{
+    if (WallsRandom[1] == 1)
+    {
+        Trap3pos = 47;
+        TrapXPos3 = 0;
+        TrapZPos3 = -8.5;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos3, Trap3pos, TrapZPos3), 3.8, EffectRev.VisibleToPositionAndRadius);
+        EffectID[9] = LastCreatedEntity();
+        CreateEffect(AllPlayers(Team.All), Effect.Orb, Color.Red, Vector(TrapXPos3, Trap3pos, TrapZPos3), 3, EffectRev.VisibleToPositionAndRadius);
+        EffectID[10] = LastCreatedEntity();
+        while (Traps3 == 1 && WallsRandom[1] == 1)
+        {
+            ChaseVariableAtRate(Trap3pos, 55, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2.5, WaitBehavior.AbortWhenFalse);
+            ChaseVariableAtRate(Trap3pos, 47, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 2)
+    {
+        Trap3pos = 47;
+        TrapXPos3 = -17;
+        TrapZPos3 = -4.25;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos3, Trap3pos, TrapZPos3), 3.8, EffectRev.VisibleToPositionAndRadius);
+        EffectID[9] = LastCreatedEntity();
+        CreateEffect(AllPlayers(Team.All), Effect.Orb, Color.Red, Vector(TrapXPos3, Trap3pos, TrapZPos3), 3, EffectRev.VisibleToPositionAndRadius);
+        EffectID[10] = LastCreatedEntity();
+        while (Traps3 == 1 && WallsRandom[1] == 2)
+        {
+            ChaseVariableAtRate(Trap3pos, 55, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2.5, WaitBehavior.AbortWhenFalse);
+            ChaseVariableAtRate(Trap3pos, 47, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 3)
+    {
+        Trap3pos = 47;
+        TrapXPos3 = -4.25;
+        TrapZPos3 = -8.5;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos3, Trap3pos, TrapZPos3), 3.8, EffectRev.VisibleToPositionAndRadius);
+        EffectID[9] = LastCreatedEntity();
+        CreateEffect(AllPlayers(Team.All), Effect.Orb, Color.Red, Vector(TrapXPos3, Trap3pos, TrapZPos3), 3, EffectRev.VisibleToPositionAndRadius);
+        EffectID[10] = LastCreatedEntity();
+        while (Traps3 == 1 && WallsRandom[1] == 3)
+        {
+            ChaseVariableAtRate(Trap3pos, 55, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2.5, WaitBehavior.AbortWhenFalse);
+            ChaseVariableAtRate(Trap3pos, 47, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 4)
+    {
+        Trap3pos = 47;
+        TrapXPos3 = -4.25;
+        TrapZPos3 = 8.5;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos3, Trap3pos, TrapZPos3), 3.8, EffectRev.VisibleToPositionAndRadius);
+        EffectID[9] = LastCreatedEntity();
+        CreateEffect(AllPlayers(Team.All), Effect.Orb, Color.Red, Vector(TrapXPos3, Trap3pos, TrapZPos3), 3, EffectRev.VisibleToPositionAndRadius);
+        EffectID[10] = LastCreatedEntity();
+        while (Traps3 == 1 && WallsRandom[1] == 4)
+        {
+            ChaseVariableAtRate(Trap3pos, 55, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2.5, WaitBehavior.AbortWhenFalse);
+            ChaseVariableAtRate(Trap3pos, 47, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+}
+
+rule: "Big Balls Of Death Damage 3"
+Event.OngoingPlayer
+if (Traps3 == 1)
+if (DistanceBetween(EventPlayer(), Vector(TrapXPos3, Trap3pos, TrapZPos3)) <= 4)
+{
+    Damage(EventPlayer(), null, 50);
+    SetStatus(EventPlayer(), null, Status.Asleep, 2);
+    Wait(4, WaitBehavior.AbortWhenFalse);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Tracer 3"
+if (Traps3 == 2)
+{
+    if (WallsRandom[1] == 1)
+    {
+        Trap3pos = 47;
+        TrapXPos3 = 0;
+        TrapZPos3 = -8.5;
+        # wait(1, Wait.ABORT_WHEN_FALSE)
+        CreateDummyBot(Hero.Tracer, Team.All, 11, Vector(TrapXPos3, Trap3pos, TrapZPos3), Vector(0, 0, 0));
+        EffectID[11] = LastCreatedEntity();
+        # EffectID[3].setStatusEffect(null, Status.PHASED_OUT, 9999)
+        StartHoldingButton(EffectID[11], Button.PrimaryFire);
+        while (Traps3 == 2 && WallsRandom[1] == 1)
+        {
+            StartFacing(EffectID[11], DirectionFromAngles(0, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            SetUltimateCharge(EffectID[11], 100);
+            SetUltimateAbilityEnabled(EffectID[11], true);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+            StartFacing(EffectID[11], DirectionFromAngles(90, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            PressButton(EffectID[11], Button.Ultimate);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+            StartFacing(EffectID[11], DirectionFromAngles(180, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+            StartFacing(EffectID[11], DirectionFromAngles(270, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 2)
+    {
+        Trap3pos = 47;
+        TrapXPos3 = -17;
+        TrapZPos3 = -4.25;
+        # wait(1, Wait.ABORT_WHEN_FALSE)
+        CreateDummyBot(Hero.Tracer, Team.All, 11, Vector(TrapXPos3, Trap3pos, TrapZPos3), Vector(0, 0, 0));
+        EffectID[11] = LastCreatedEntity();
+        # EffectID[3].setStatusEffect(null, Status.PHASED_OUT, 9999)
+        StartHoldingButton(EffectID[11], Button.PrimaryFire);
+        while (Traps3 == 2 && WallsRandom[1] == 2)
+        {
+            StartFacing(EffectID[11], DirectionFromAngles(0, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            SetUltimateCharge(EffectID[11], 100);
+            SetUltimateAbilityEnabled(EffectID[11], true);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+            StartFacing(EffectID[11], DirectionFromAngles(90, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            PressButton(EffectID[11], Button.Ultimate);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+            StartFacing(EffectID[11], DirectionFromAngles(180, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+            StartFacing(EffectID[11], DirectionFromAngles(270, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 3)
+    {
+        Trap3pos = 47;
+        TrapXPos3 = -4.25;
+        TrapZPos3 = -8.5;
+        # wait(1, Wait.ABORT_WHEN_FALSE)
+        CreateDummyBot(Hero.Tracer, Team.All, 11, Vector(TrapXPos3, Trap3pos, TrapZPos3), Vector(0, 0, 0));
+        EffectID[11] = LastCreatedEntity();
+        # EffectID[3].setStatusEffect(null, Status.PHASED_OUT, 9999)
+        StartHoldingButton(EffectID[11], Button.PrimaryFire);
+        while (Traps3 == 2 && WallsRandom[1] == 3)
+        {
+            StartFacing(EffectID[11], DirectionFromAngles(0, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            SetUltimateCharge(EffectID[11], 100);
+            SetUltimateAbilityEnabled(EffectID[11], true);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+            StartFacing(EffectID[11], DirectionFromAngles(90, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            PressButton(EffectID[11], Button.Ultimate);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+            StartFacing(EffectID[11], DirectionFromAngles(180, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+            StartFacing(EffectID[11], DirectionFromAngles(270, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 4)
+    {
+        Trap3pos = 47;
+        TrapXPos3 = -4.25;
+        TrapZPos3 = 8.5;
+        # wait(1, Wait.ABORT_WHEN_FALSE)
+        CreateDummyBot(Hero.Tracer, Team.All, 11, Vector(TrapXPos3, Trap3pos, TrapZPos3), Vector(0, 0, 0));
+        EffectID[11] = LastCreatedEntity();
+        # EffectID[3].setStatusEffect(null, Status.PHASED_OUT, 9999)
+        StartHoldingButton(EffectID[11], Button.PrimaryFire);
+        while (Traps3 == 2 && WallsRandom[1] == 4)
+        {
+            StartFacing(EffectID[11], DirectionFromAngles(0, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            SetUltimateCharge(EffectID[11], 100);
+            SetUltimateAbilityEnabled(EffectID[11], true);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+            StartFacing(EffectID[11], DirectionFromAngles(90, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            PressButton(EffectID[11], Button.Ultimate);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+            StartFacing(EffectID[11], DirectionFromAngles(180, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+            StartFacing(EffectID[11], DirectionFromAngles(270, 18), 400, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+            Wait(0.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+}
+
+rule: "Cassidy Bang 3"
+if (Traps3 == 3)
+{
+    if (WallsRandom[1] == 1)
+    {
+        Trap3pos = 47;
+        TrapXPos3 = 0;
+        TrapZPos3 = -8.5;
+        # wait(1, Wait.ABORT_WHEN_FALSE)
+        CreateDummyBot(Hero.Cassidy, Team.All, 11, Vector(TrapXPos3, Trap3pos, TrapZPos3), DirectionFromAngles(0, 0));
+        EffectID[12] = LastCreatedEntity();
+        StartFacing(EffectID[12], DirectionFromAngles(0, 90), 100, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+        # EffectID[12].setStatusEffect(null, Status.PHASED_OUT, 9999)
+        while (Traps3 == 3 && WallsRandom[1] == 1)
+        {
+            PressButton(EffectID[12], Button.Ability2);
+            Wait(1.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 2)
+    {
+        Trap3pos = 47;
+        TrapXPos3 = -17;
+        TrapZPos3 = -4.25;
+        # wait(1, Wait.ABORT_WHEN_FALSE)
+        CreateDummyBot(Hero.Cassidy, Team.All, 11, Vector(TrapXPos3, Trap3pos, TrapZPos3), DirectionFromAngles(0, 0));
+        EffectID[12] = LastCreatedEntity();
+        StartFacing(EffectID[12], DirectionFromAngles(0, 90), 100, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+        # EffectID[12].setStatusEffect(null, Status.PHASED_OUT, 9999)
+        while (Traps3 == 3 && WallsRandom[1] == 2)
+        {
+            PressButton(EffectID[12], Button.Ability2);
+            Wait(1.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 3)
+    {
+        Trap3pos = 47;
+        TrapXPos3 = -4.25;
+        TrapZPos3 = -8.5;
+        # wait(1, Wait.ABORT_WHEN_FALSE)
+        CreateDummyBot(Hero.Cassidy, Team.All, 11, Vector(TrapXPos3, Trap3pos, TrapZPos3), DirectionFromAngles(0, 0));
+        EffectID[12] = LastCreatedEntity();
+        StartFacing(EffectID[12], DirectionFromAngles(0, 90), 100, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+        # EffectID[12].setStatusEffect(null, Status.PHASED_OUT, 9999)
+        while (Traps3 == 3 && WallsRandom[1] == 3)
+        {
+            PressButton(EffectID[12], Button.Ability2);
+            Wait(1.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 4)
+    {
+        Trap3pos = 47;
+        TrapXPos3 = -4.25;
+        TrapZPos3 = 8.5;
+        # wait(1, Wait.ABORT_WHEN_FALSE)
+        CreateDummyBot(Hero.Cassidy, Team.All, 11, Vector(TrapXPos3, Trap3pos, TrapZPos3), DirectionFromAngles(0, 0));
+        EffectID[12] = LastCreatedEntity();
+        StartFacing(EffectID[12], DirectionFromAngles(0, 90), 100, Relative.ToWorld, FacingRev.DirectionAndTurnRate);
+        # EffectID[12].setStatusEffect(null, Status.PHASED_OUT, 9999)
+        while (Traps3 == 3 && WallsRandom[1] == 4)
+        {
+            PressButton(EffectID[12], Button.Ability2);
+            Wait(1.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+}
+
+rule: "Red Ball Horizontal 3"
+if (Traps3 == 4)
+{
+    if (WallsRandom[1] == 1)
+    {
+        Trap3pos = 47;
+        TrapXPos3 = 0;
+        TrapZPos3 = -8;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos3, Trap3pos, TrapZPos3), 2, EffectRev.VisibleToPositionAndRadius);
+        EffectID[13] = LastCreatedEntity();
+        while (Traps3 == 4 && WallsRandom[1] == 1)
+        {
+            ChaseVariableOverTime(TrapZPos3, -12, 1, TimeChaseReevaluation.DestinationAndDuration);
+            Wait(1, WaitBehavior.AbortWhenFalse);
+            ChaseVariableOverTime(TrapZPos3, -4, 1, TimeChaseReevaluation.DestinationAndDuration);
+            Wait(1, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 2)
+    {
+        Trap3pos = 47;
+        TrapXPos3 = -17;
+        TrapZPos3 = -4.25;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos3, Trap3pos, TrapZPos3), 2, EffectRev.VisibleToPositionAndRadius);
+        EffectID[13] = LastCreatedEntity();
+        while (Traps3 == 4 && WallsRandom[1] == 2)
+        {
+            ChaseVariableOverTime(TrapXPos3, -21, 1, TimeChaseReevaluation.DestinationAndDuration);
+            Wait(1, WaitBehavior.AbortWhenFalse);
+            ChaseVariableOverTime(TrapXPos3, -12, 1, TimeChaseReevaluation.DestinationAndDuration);
+            Wait(1, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 3)
+    {
+        Trap3pos = 47;
+        TrapXPos3 = 0;
+        TrapZPos3 = -8;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos3, Trap3pos, TrapZPos3), 2, EffectRev.VisibleToPositionAndRadius);
+        EffectID[13] = LastCreatedEntity();
+        while (Traps3 == 4 && WallsRandom[1] == 3)
+        {
+            ChaseVariableOverTime(TrapZPos3, -12, 1, TimeChaseReevaluation.DestinationAndDuration);
+            Wait(1, WaitBehavior.AbortWhenFalse);
+            ChaseVariableOverTime(TrapZPos3, -4, 1, TimeChaseReevaluation.DestinationAndDuration);
+            Wait(1, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 4)
+    {
+        Trap3pos = 47;
+        TrapXPos3 = -4.25;
+        TrapZPos3 = 12.75;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos3, Trap3pos, TrapZPos3), 2, EffectRev.VisibleToPositionAndRadius);
+        EffectID[13] = LastCreatedEntity();
+        while (Traps3 == 4 && WallsRandom[1] == 4)
+        {
+            ChaseVariableOverTime(TrapXPos3, 4.25, 1, TimeChaseReevaluation.DestinationAndDuration);
+            Wait(1, WaitBehavior.AbortWhenFalse);
+            ChaseVariableOverTime(TrapXPos3, -12.75, 1, TimeChaseReevaluation.DestinationAndDuration);
+            Wait(1, WaitBehavior.AbortWhenFalse);
+        }
+    }
+}
+
+rule: "Red Ball Horizontal Damage 3"
+Event.OngoingPlayer
+if (Traps3 == 4)
+if (DistanceBetween(EventPlayer(), Vector(TrapXPos3, Trap3pos, TrapZPos3)) <= 2.1)
+{
+    Damage(EventPlayer(), null, 50);
+    SetStatus(EventPlayer(), null, Status.Asleep, 2);
+    Wait(4, WaitBehavior.IgnoreCondition);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Growing Ball 3"
+if (Traps3 == 5)
+{
+    if (WallsRandom[1] == 1)
+    {
+        Trap3pos = 48;
+        TrapXPos3 = 0;
+        TrapZPos3 = 4.2;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos3, Trap3pos, -8.5), TrapZPos3, EffectRev.VisibleToPositionAndRadius);
+        EffectID[24] = LastCreatedEntity();
+        CreateEffect(AllPlayers(Team.All), Effect.Orb, Color.Red, Vector(TrapXPos3, Trap3pos, -8.5), TrapZPos3, EffectRev.VisibleToPositionAndRadius);
+        EffectID[25] = LastCreatedEntity();
+        while (Traps3 == 5 && WallsRandom[1] == 1)
+        {
+            ChaseVariableAtRate(TrapZPos3, 0, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2, WaitBehavior.AbortWhenFalse);
+            ChaseVariableAtRate(TrapZPos3, 4.2, 5, RateChaseReevaluation.DestinationAndRate);
+            Wait(1.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 2)
+    {
+        Trap3pos = 48;
+        TrapXPos3 = -17;
+        TrapZPos3 = 4.2;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos3, Trap3pos, -4.25), TrapZPos3, EffectRev.VisibleToPositionAndRadius);
+        EffectID[24] = LastCreatedEntity();
+        CreateEffect(AllPlayers(Team.All), Effect.Orb, Color.Red, Vector(TrapXPos3, Trap3pos, -4.25), TrapZPos3, EffectRev.VisibleToPositionAndRadius);
+        EffectID[25] = LastCreatedEntity();
+        while (Traps3 == 5 && WallsRandom[1] == 2)
+        {
+            ChaseVariableAtRate(TrapZPos3, 0, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2, WaitBehavior.AbortWhenFalse);
+            ChaseVariableAtRate(TrapZPos3, 4.2, 5, RateChaseReevaluation.DestinationAndRate);
+            Wait(1.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 3)
+    {
+        Trap3pos = 48;
+        TrapXPos3 = 0;
+        TrapZPos3 = 4.2;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos3, Trap3pos, -8.5), TrapZPos3, EffectRev.VisibleToPositionAndRadius);
+        EffectID[24] = LastCreatedEntity();
+        CreateEffect(AllPlayers(Team.All), Effect.Orb, Color.Red, Vector(TrapXPos3, Trap3pos, -8.5), TrapZPos3, EffectRev.VisibleToPositionAndRadius);
+        EffectID[25] = LastCreatedEntity();
+        while (Traps3 == 5 && WallsRandom[1] == 3)
+        {
+            ChaseVariableAtRate(TrapZPos3, 0, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2, WaitBehavior.AbortWhenFalse);
+            ChaseVariableAtRate(TrapZPos3, 4.2, 5, RateChaseReevaluation.DestinationAndRate);
+            Wait(1.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+    if (WallsRandom[1] == 4)
+    {
+        Trap3pos = 48;
+        TrapXPos3 = -4.25;
+        TrapZPos3 = 4.2;
+        CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Red, Vector(TrapXPos3, Trap3pos, 8.5), TrapZPos3, EffectRev.VisibleToPositionAndRadius);
+        EffectID[24] = LastCreatedEntity();
+        CreateEffect(AllPlayers(Team.All), Effect.Orb, Color.Red, Vector(TrapXPos3, Trap3pos, 8.5), TrapZPos3, EffectRev.VisibleToPositionAndRadius);
+        EffectID[25] = LastCreatedEntity();
+        while (Traps3 == 5 && WallsRandom[1] == 4)
+        {
+            ChaseVariableAtRate(TrapZPos3, 0, 3, RateChaseReevaluation.DestinationAndRate);
+            Wait(2, WaitBehavior.AbortWhenFalse);
+            ChaseVariableAtRate(TrapZPos3, 4.2, 5, RateChaseReevaluation.DestinationAndRate);
+            Wait(1.5, WaitBehavior.AbortWhenFalse);
+        }
+    }
+}
+
+rule: "Growing Ball Damage 3"
+Event.OngoingPlayer
+if (Traps3 == 5)
+if (WallsRandom[1] == 1)
+if (DistanceBetween(EventPlayer(), Vector(TrapXPos3, Trap3pos, -8.5)) <= TrapZPos3 + 0.2)
+{
+    Damage(EventPlayer(), null, 50);
+    SetStatus(EventPlayer(), null, Status.Asleep, 2);
+    Wait(4, WaitBehavior.AbortWhenFalse);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Growing Ball Damage 3 2"
+Event.OngoingPlayer
+if (Traps3 == 5)
+if (WallsRandom[1] == 2)
+if (DistanceBetween(EventPlayer(), Vector(TrapXPos3, Trap3pos, -4.25)) <= TrapZPos3 + 0.2)
+{
+    Damage(EventPlayer(), null, 50);
+    SetStatus(EventPlayer(), null, Status.Asleep, 2);
+    Wait(4, WaitBehavior.AbortWhenFalse);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Growing Ball Damage 3 3"
+Event.OngoingPlayer
+if (Traps3 == 5)
+if (WallsRandom[1] == 3)
+if (DistanceBetween(EventPlayer(), Vector(TrapXPos3, Trap3pos, -8.5)) <= TrapZPos3 + 0.2)
+{
+    Damage(EventPlayer(), null, 50);
+    SetStatus(EventPlayer(), null, Status.Asleep, 2);
+    Wait(4, WaitBehavior.AbortWhenFalse);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Growing Ball Damage 3 4"
+Event.OngoingPlayer
+if (Traps3 == 5)
+if (WallsRandom[1] == 4)
+if (DistanceBetween(EventPlayer(), Vector(TrapXPos3, Trap3pos, 12.75)) <= TrapZPos3 + 0.2)
+{
+    Damage(EventPlayer(), null, 50);
+    SetStatus(EventPlayer(), null, Status.Asleep, 2);
+    Wait(4, WaitBehavior.AbortWhenFalse);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Melee"
+Event.OnDamageTaken
+if (IsDummyBot(Attacker()) == false)
+if (IsMeleeing(Attacker()) == true)
+if (HeroOf(Attacker()) != Hero.Moira)
+if (EventAbility() == Button.Melee)
+{
+    ApplyImpulse(Victim(), FacingDirectionOf(Attacker()), 10, Relative.ToWorld, ContraryMotion.Cancel);
+    Wait(0.02, WaitBehavior.IgnoreCondition);
+    SetStatus(Victim(), null, Status.KnockedDown, 0.5);
+}
+
+rule: "Ana Sleep"
+Event.OnDamageTaken
+if (EventAbility() == Button.Ability1)
+if (HeroOf(Attacker()) == Hero.Ana)
+{
+    # @Condition victim.hasStatusEffect(Status.ASLEEP) == true
+    Wait(2, WaitBehavior.IgnoreCondition);
+    Damage(Victim(), null, 0.001);
+    SetAimSpeed(Victim(), 300);
+    Wait(2, WaitBehavior.IgnoreCondition);
+    SetAimSpeed(Victim(), 100);
+}
+
+rule: "Ana Heal"
+Event.OngoingPlayer
+if (HeroOf(EventPlayer()) == Hero.Ana)
+if (IsButtonHeld(EventPlayer(), Button.Ability2) == true)
+if (AnaHealCD == 0)
+{
+    AnaHealCD = 10;
+    Heal(EventPlayer(), null, 50);
+    SetMoveSpeed(EventPlayer(), 125);
+    ChaseVariableOverTime(AnaHealCD, 0, 10, TimeChaseReevaluation.DestinationAndDuration);
+    Wait(2, WaitBehavior.IgnoreCondition);
+    SetMoveSpeed(EventPlayer(), 100);
+}
+
+rule: "Ashe Mine"
+Event.OnDamageTaken
+if (HasStatus(Victim(), Status.Burning) == true)
+{
+    # @Condition attacker == Hero.ASHE
+    SetMoveSpeed(Victim(), 60);
+    Wait(5, WaitBehavior.IgnoreCondition);
+    SetMoveSpeed(Victim(), 100);
+}
+
+rule: "Mercy Sprint"
+Event.OngoingPlayer
+if (MercySprint > 0)
+if (HeroOf(EventPlayer()) == Hero.Mercy)
+if (IsButtonHeld(EventPlayer(), Button.Ability1) == true)
+if (IsPoisoned != true)
+{
+    StopChasingVariable(MercySprint);
+    SetMoveSpeed(EventPlayer(), 150);
+    ChaseVariableAtRate(MercySprint, 0, 15, RateChaseReevaluation.DestinationAndRate);
+}
+
+rule: "Mercy Not Sprint"
+Event.OngoingPlayer
+# @Condition eventPlayer.MercySprint > 0
+if (HeroOf(EventPlayer()) == Hero.Mercy)
+if (IsButtonHeld(EventPlayer(), Button.Ability1) == false)
+{
+    StopChasingVariable(MercySprint);
+    ChaseVariableAtRate(MercySprint, 50, 2, RateChaseReevaluation.DestinationAndRate);
+    SetMoveSpeed(EventPlayer(), 100);
+}
+
+rule: "Mercy Sprint Reset"
+Event.OngoingPlayer
+if (HeroOf(EventPlayer()) == Hero.Mercy)
+{
+    MercySprint = 50;
+}
+
+rule: "Mercy Sprint Meter = 0"
+Event.OngoingPlayer
+if (MercySprint == 0)
+if (HeroOf(EventPlayer()) == Hero.Mercy)
+{
+    SetMoveSpeed(EventPlayer(), 100);
+}
+
+rule: "Mercy Cease 1"
+Event.OngoingPlayer
+if (HeroOf(EventPlayer()) == Hero.Mercy)
+if (IsButtonHeld(EventPlayer(), Button.Ability2) == true)
+if (AbilityCooldown(EventPlayer(), Button.Ability2) == 0)
+if (IsAlive(EventPlayer()) == true)
+if (Round % 2 == 0)
+if (AtSafetyy == false)
+if (RoundInProgress == true)
+{
+    StopChasingVariable(LinePos);
+    SetAbilityCooldown(EventPlayer(), Button.Ability2, 60);
+    SmallMessage(AllPlayers(Team.All), "Mercy Has Stopped the line for 4 seconds!");
+    PlayEffect(AllPlayers(Team.All), PlayEffect.BuffImpactSound, Color.White, PositionOf(EventPlayer()), 250);
+    RunText = "FROZEN";
+    Wait(4, WaitBehavior.IgnoreCondition);
+    RunText = "RUN";
+    if (RoundInProgress == true)
+    {
+        ChaseVariableAtRate(LinePos, 60, LineSpeed, RateChaseReevaluation.DestinationAndRate);
+    }
+}
+
+rule: "Mercy Cease 2"
+Event.OngoingPlayer
+if (HeroOf(EventPlayer()) == Hero.Mercy)
+if (IsButtonHeld(EventPlayer(), Button.Ability2) == true)
+if (AbilityCooldown(EventPlayer(), Button.Ability2) == 0)
+if (IsAlive(EventPlayer()) == true)
+if (Round % 2 == 1)
+if (AtSafetyy == false)
+if (RoundInProgress == true)
+{
+    StopChasingVariable(LinePos);
+    SetAbilityCooldown(EventPlayer(), Button.Ability2, 60);
+    SmallMessage(AllPlayers(Team.All), "Mercy Has Stopped the line for 4 seconds!");
+    PlayEffect(AllPlayers(Team.All), PlayEffect.BuffImpactSound, Color.White, PositionOf(EventPlayer()), 250);
+    RunText = "FROZEN";
+    Wait(4, WaitBehavior.IgnoreCondition);
+    RunText = "RUN";
+    if (RoundInProgress == true)
+    {
+        ChaseVariableAtRate(LinePos, -60, LineSpeed, RateChaseReevaluation.DestinationAndRate);
+    }
+}
+
+rule: "Sombra Hack/EMP"
+Event.OngoingPlayer
+if (HasStatus(EventPlayer(), Status.Hacked) == true)
+{
+    # eventPlayer.setStatusEffect(null, Status.ASLEEP, 2)
+    SetStatus(EventPlayer(), null, Status.Frozen, 0.5);
+    SetStatus(EventPlayer(), null, Status.Asleep, 1);
+    Wait(1, WaitBehavior.IgnoreCondition);
+    SetAimSpeed(EventPlayer(), 9999);
+    Wait(1, WaitBehavior.IgnoreCondition);
+    SetAimSpeed(EventPlayer(), 100);
+    ClearStatus(EventPlayer(), Status.Hacked);
+}
+
+rule: "Sombra Invis"
+Event.OngoingPlayer
+if (HeroOf(EventPlayer()) == Hero.Sombra)
+if (IsUsingAbility1(EventPlayer()) == true)
+{
+    SmallMessage(EventPlayer(), "Invis for 6 Seconds");
+    Wait(6, WaitBehavior.IgnoreCondition);
+    PressButton(EventPlayer(), Button.Ability1);
+}
+
+rule: "Sombra Ult Charge"
+Event.OnDamageDealt
+if (HeroOf(Attacker()) == Hero.Sombra)
+if (IsMeleeing(Attacker()) == true)
+{
+    SombraEMP += 10;
+    SetUltimateCharge(EventPlayer(), SombraEMP);
+}
+
+rule: "Sombra Ult Usage"
+Event.OngoingPlayer
+if (IsUsingUltimate(EventPlayer()) == true)
+if (HeroOf(EventPlayer()) == Hero.Sombra)
+{
+    MinWait();
+    SombraEMP = 0;
+}
+
+rule: "Roadhog Heal Wall"
+Event.OngoingPlayer
+if (HeroOf(EventPlayer()) == Hero.Roadhog)
+if (IsUsingAbility2(EventPlayer()) == true)
+{
+    SetMoveSpeed(EventPlayer(), 50);
+    Phasing = true;
+}
+
+rule: "Roadhog Not Heal Wall"
+Event.OngoingPlayer
+if (HeroOf(EventPlayer()) == Hero.Roadhog)
+if (IsUsingAbility2(EventPlayer()) == false)
+{
+    SetMoveSpeed(EventPlayer(), 100);
+    Phasing = false;
+}
+
+rule: "Mei Firing"
+Event.OngoingPlayer
+if (MeiAmmo > 1)
+if (HeroOf(EventPlayer()) == Hero.Mei)
+if (IsButtonHeld(EventPlayer(), Button.PrimaryFire) == true)
+{
+    StopChasingVariable(MeiAmmo);
+    # eventPlayer.allowButton(Button.PRIMARY_FIRE)
+    ChaseVariableAtRate(MeiAmmo, 0, 25, RateChaseReevaluation.DestinationAndRate);
+}
+
+rule: "Mei Allow Gun"
+Event.OngoingPlayer
+if (MeiAmmo > 1)
+if (HeroOf(EventPlayer()) == Hero.Mei)
+{
+    AllowButton(EventPlayer(), Button.PrimaryFire);
+}
+
+rule: "Mei Not Firing"
+Event.OngoingPlayer
+# @Condition eventPlayer.MercySprint > 0
+if (HeroOf(EventPlayer()) == Hero.Mei)
+if (IsButtonHeld(EventPlayer(), Button.PrimaryFire) == false)
+{
+    StopChasingVariable(MeiAmmo);
+    ChaseVariableAtRate(MeiAmmo, 50, 15, RateChaseReevaluation.DestinationAndRate);
+}
+
+rule: "Mei Firing Reset"
+Event.OngoingPlayer
+if (HeroOf(EventPlayer()) == Hero.Mei)
+{
+    MeiAmmo = 50;
+}
+
+rule: "Mei Fire Meter = 0"
+Event.OngoingPlayer
+if (MeiAmmo < 1)
+if (HeroOf(EventPlayer()) == Hero.Mei)
+{
+    DisallowButton(EventPlayer(), Button.PrimaryFire);
+}
+
+rule: "Mei Ult Charge"
+Event.OnDamageDealt
+if (HeroOf(Attacker()) == Hero.Mei)
+if (IsMeleeing(Attacker()) == true)
+{
+    MeiUlt += 10;
+    SetUltimateCharge(EventPlayer(), MeiUlt);
+}
+
+rule: "Mei Ult Usage"
+Event.OngoingPlayer
+if (IsUsingUltimate(EventPlayer()) == true)
+if (HeroOf(EventPlayer()) == Hero.Mei)
+{
+    MinWait();
+    MeiUlt = 0;
+}
+
+rule: "Lucio Ult Charge"
+Event.OnDamageDealt
+if (HeroOf(Attacker()) == Hero.Lucio)
+if (IsMeleeing(Attacker()) == true)
+{
+    LucioUlt += 10;
+    SetUltimateCharge(EventPlayer(), LucioUlt);
+}
+
+rule: "Lucio Ult Usage"
+Event.OngoingPlayer
+if (IsUsingUltimate(EventPlayer()) == true)
+if (HeroOf(EventPlayer()) == Hero.Lucio)
+{
+    MinWait();
+    LucioUlt = 0;
+}
+
+rule: "Lucio Ult"
+Event.OngoingPlayer
+if (IsUsingUltimate(EventPlayer()) == true)
+if (HeroOf(EventPlayer()) == Hero.Lucio)
+{
+    SmallMessage(AllPlayers(Team.All), "Lucio Has Slown Down Time!");
+    SetSlowMotion(50);
+    DisallowButton(AllLivingPlayers(Team.All), Button.Ultimate);
+    SetMoveSpeed(EventPlayer(), 200);
+    Wait(4, WaitBehavior.IgnoreCondition);
+    SetSlowMotion(100);
+    SetMoveSpeed(EventPlayer(), 100);
+    AllowButton(AllPlayers(Team.All), Button.Ultimate);
+}
+
+rule: "Widow Snipe Hit"
+Event.OnDamageDealt
+if (EventAbility() == Button.PrimaryFire)
+if (HeroOf(Attacker()) == Hero.Widowmaker)
+if (Attacker().WidowCD == 0)
+{
+    Attacker().WidowOldPos = PositionOf(Attacker());
+    # attacker.WidowCD = 35\nchase(attacker.WidowCD, 0, duration=35, ChaseReeval.DESTINATION_AND_DURATION)\nwait()
+    Teleport(Attacker(), Victim());
+    Teleport(Victim(), Attacker().WidowOldPos);
+    # attacker.disallowButton(Button.PRIMARY_FIRE)
+    SmallMessage(Victim(), "Widow Swapped Positions With You! ");
+    SmallMessage(Attacker(), "Teleported");
+}
+
+rule: "Widow Snipe Miss/cancel"
+Event.OngoingPlayer
+# @Condition eventPlayer.isHoldingButton(Button.PRIMARY_FIRE) == true
+if (HeroOf(EventPlayer()) == Hero.Widowmaker)
+if (WidowCD == 0)
+# @Condition eventPlayer.isHoldingButton(Button.SECONDARY_FIRE) == true
+if (IsFiringPrimary(EventPlayer()) == true)
+{
+    WidowCD = 35;
+    ChaseVariableOverTime(WidowCD, 0, 35, TimeChaseReevaluation.DestinationAndDuration);
+    DisallowButton(EventPlayer(), Button.PrimaryFire);
+}
+
+rule: "Widow Allow Gun"
+Event.OngoingPlayer
+if (WidowCD == 0)
+if (HeroOf(EventPlayer()) == Hero.Widowmaker)
+{
+    AllowButton(EventPlayer(), Button.PrimaryFire);
+}
+
+rule: "Venom Mine Slowdown"
+Event.OnDamageTaken
+if (HeroOf(Attacker()) == Hero.Widowmaker)
+if (EventAbility() == Button.Ability2)
+{
+    Victim().IsPoisoned = true;
+    SetMoveSpeed(Victim(), 50);
+    Wait(2, WaitBehavior.IgnoreCondition);
+    SetMoveSpeed(Victim(), 100);
+    Victim().IsPoisoned = false;
+}
+
+rule: "Genji Dash"
+Event.OngoingPlayer
+if (HeroOf(EventPlayer()) == Hero.Genji)
+if (IsButtonHeld(EventPlayer(), Button.Ability1) == true)
+if (IsPoisoned != true)
+if (GenjiCD == 0)
+{
+    SetInvisible(EventPlayer(), InvisibleTo.All);
+    SetMoveSpeed(EventPlayer(), 200);
+    Communicate(EventPlayer(), Communication.VoiceLineUp);
+    StartCamera(EventPlayer(), WorldVectorOf(Vector(0, 1.5, -5), EventPlayer(), LocalVector.RotationAndTranslation), WorldVectorOf(Vector(0, 1.5, 0), EventPlayer(), LocalVector.RotationAndTranslation), 0);
+    CreateEffect(AllPlayers(Team.All), Effect.Orb, Color.Green, PositionOf(EventPlayer()), 2, EffectRev.VisibleToPositionAndRadius);
+    EffectIDPlayers[1] = LastCreatedEntity();
+    Wait(4, WaitBehavior.IgnoreCondition);
+    GenjiCD = 26;
+    DestroyEffect(EffectIDPlayers[1]);
+    SetMoveSpeed(EventPlayer(), 100);
+    StopCamera(EventPlayer());
+    ChaseVariableOverTime(GenjiCD, 0, 26, TimeChaseReevaluation.DestinationAndDuration);
+    if (AtSafetyy != true)
+    {
+        SetInvisible(EventPlayer(), InvisibleTo.None);
+    }
+}
+
+rule: "Genji Ult"
+Event.OngoingPlayer
+if (IsUsingUltimate(EventPlayer()) == true)
+if (HeroOf(EventPlayer()) == Hero.Genji)
+if (IsPoisoned != true)
+{
+    SetMoveSpeed(EventPlayer(), 150);
+    Wait(5, WaitBehavior.IgnoreCondition);
+    SetMoveSpeed(EventPlayer(), 100);
+}
+
+rule: "Genji Attack"
+Event.OnDamageTaken
+if (HeroOf(Attacker()) == Hero.Genji)
+if (IsUsingUltimate(Attacker()) == true)
+{
+    ApplyImpulse(Victim(), FacingDirectionOf(Attacker()), 15, Relative.ToWorld, ContraryMotion.Cancel);
+    Wait(0.02, WaitBehavior.IgnoreCondition);
+    SetStatus(Victim(), null, Status.KnockedDown, 1);
+}
+
+rule: "Genji Ult Charge"
+Event.OnDamageDealt
+if (HeroOf(Attacker()) == Hero.Genji)
+if (IsMeleeing(Attacker()) == true)
+{
+    GenjiUlt += 5;
+    SetUltimateCharge(EventPlayer(), GenjiUlt);
+}
+
+rule: "Genji Ult Usage"
+Event.OngoingPlayer
+if (IsUsingUltimate(EventPlayer()) == true)
+if (HeroOf(EventPlayer()) == Hero.Genji)
+{
+    MinWait();
+    GenjiUlt = 0;
+}
+
+rule: "Melee CD"
+Event.OngoingPlayer
+if (IsMeleeing(EventPlayer()) == true)
+if (Safe == false)
+{
+    MeleeCD = 4;
+    ChaseVariableOverTime(MeleeCD, 0, 4, TimeChaseReevaluation.DestinationAndDuration);
+    DisallowButton(EventPlayer(), Button.Melee);
+}
+
+rule: "Melee CD Off"
+Event.OngoingPlayer
+if (MeleeCD == 0)
+if (Safe == false)
+{
+    AllowButton(EventPlayer(), Button.Melee);
+}
+
+rule: "Junkrat Primary"
+Event.OnDamageDealt
+if (HeroOf(Attacker()) == Hero.Junkrat)
+# @Condition attacker.isFiringPrimaryFire() == true
+if (EventAbility() == Button.PrimaryFire)
+{
+    SetStatus(Victim(), null, Status.KnockedDown, 1);
+    ApplyImpulse(Victim(), FacingDirectionOf(Attacker()), 10, Relative.ToWorld, ContraryMotion.Cancel);
+}
+
+rule: "Genji ULT fix"
+Event.OngoingPlayer
+if (GenjiUlt > 100)
+if (HeroOf(EventPlayer()) == Hero.Genji)
+{
+    GenjiUlt = 90;
+}
+
+rule: "Sombra ULT fix"
+Event.OngoingPlayer
+if (SombraEMP > 100)
+if (HeroOf(EventPlayer()) == Hero.Sombra)
+{
+    SombraEMP = 90;
+}
+
+rule: "Mei ULT fix"
+Event.OngoingPlayer
+if (MeiUlt > 100)
+if (HeroOf(EventPlayer()) == Hero.Mei)
+{
+    MeiUlt = 90;
+}
+
+rule: "Lucio ULT fix"
+Event.OngoingPlayer
+if (LucioUlt > 100)
+if (HeroOf(EventPlayer()) == Hero.Lucio)
+{
+    LucioUlt = 90;
+}
+
+rule: "Junkrat Fix"
+Event.OngoingPlayer
+if (HeroOf(EventPlayer()) == Hero.Junkrat)
+{
+    AllowButton(EventPlayer(), Button.PrimaryFire);
+    SetDamageDealt(EventPlayer(), 1);
+}
+
+rule: "MEI Fix"
+Event.OngoingPlayer
+if (HeroOf(EventPlayer()) == Hero.Mei)
+{
+    AllowButton(EventPlayer(), Button.PrimaryFire);
+    SetDamageDealt(EventPlayer(), 1);
+}
+
+rule: "Damage Fix for all non-junkrats"
+Event.OngoingPlayer
+if (HeroOf(EventPlayer()) != Hero.Junkrat)
+if (IsDummyBot(EventPlayer()) == false)
+{
+    SetDamageDealt(EventPlayer(), 100);
+}
+
+rule: "Tracer Fix"
+Event.OngoingPlayer
+if (HeroOf(EventPlayer()) == Hero.Tracer)
+{
+    SetDamageDealt(EventPlayer(), 1);
+}
+
+rule: "Moira Melee"
+Event.OnDamageTaken
+if (IsDummyBot(Attacker()) == false)
+if (IsMeleeing(Attacker()) == true)
+if (HeroOf(Attacker()) == Hero.Moira)
+if (EventAbility() == Button.Melee)
+{
+    ApplyImpulse(Victim(), FacingDirectionOf(Attacker()), 10, Relative.ToWorld, ContraryMotion.Cancel);
+    Wait(0.02, WaitBehavior.IgnoreCondition);
+    SetStatus(Victim(), null, Status.Frozen, 1);
+}
+
+rule: "Moira Ult Charge"
+Event.OnDamageDealt
+if (HeroOf(Attacker()) == Hero.Moira)
+if (IsMeleeing(Attacker()) == true)
+{
+    MoiraUlt += 10;
+    SetUltimateCharge(EventPlayer(), MoiraUlt);
+}
+
+rule: "Moira ULT fix"
+Event.OngoingPlayer
+if (MoiraUlt > 100)
+if (HeroOf(EventPlayer()) == Hero.Moira)
+{
+    MoiraUlt = 90;
+}
+
+rule: "Moira Ult 100"
+Event.OngoingPlayer
+if (HeroOf(EventPlayer()) == Hero.Moira)
+if (UltimateChargePercent(EventPlayer()) == 100)
+{
+    SetAbility1Enabled(EventPlayer(), true);
+    SmallMessage(EventPlayer(), "Phase Enabled");
+    MoiraUlt = 0;
+    SetUltimateCharge(EventPlayer(), MoiraUlt);
+}
+
+rule: "Moira Phase"
+Event.OngoingPlayer
+if (HeroOf(EventPlayer()) == Hero.Moira)
+if (IsUsingAbility1(EventPlayer()) == true)
+{
+    MoiraPhase = true;
+    Wait(0.5, WaitBehavior.IgnoreCondition);
+    SetAbility1Enabled(EventPlayer(), false);
+    Wait(0.3, WaitBehavior.IgnoreCondition);
+    MoiraPhase = false;
+}
+
+void MoiraFix() "MoriaFix"
+{
+
+    switch (EventPlayer().hero){
+        case Hero.Moira:
+            SetAbility1Enabled(EventPlayer(), false);
+            DisallowButton(EventPlayer(), Button.PrimaryFire);
+            MoiraPhase = false;
+            break;
+        case Hero.Widowmaker:
+            SetAbility1Enabled(EventPlayer(), false);
+            MoiraPhase = false;
+            break;
+        case Hero.Genji:
+            SetAbility1Enabled(EventPlayer(), false);
+            DisallowButton(EventPlayer(), Button.PrimaryFire);
+            MoiraPhase = false;
+            break;
+        case Hero.Mei:
+            SetAbility1Enabled(EventPlayer(), false);
+            MoiraPhase = false;
+            break;
+        case Hero.Lucio:
+            SetAbility1Enabled(EventPlayer(), false);
+            DisallowButton(EventPlayer(), Button.PrimaryFire);
+            MoiraPhase = false;
+            break;
+        case Hero.Roadhog:
+            SetAbility1Enabled(EventPlayer(), true);
+            DisallowButton(EventPlayer(), Button.PrimaryFire);
+            MoiraPhase = false;
+            break;
+        case Hero.Mercy:
+            SetAbility1Enabled(EventPlayer(), true);
+            DisallowButton(EventPlayer(), Button.PrimaryFire);
+            MoiraPhase = false;
+            break;
+        case Hero.Ashe:
+            SetAbility1Enabled(EventPlayer(), true);
+            DisallowButton(EventPlayer(), Button.PrimaryFire);
+            MoiraPhase = false;
+            break;
+        case Hero.Ana:
+            SetAbility1Enabled(EventPlayer(), true);
+            DisallowButton(EventPlayer(), Button.PrimaryFire);
+            MoiraPhase = false;
+            break;
+        case Hero.Junkrat:
+            SetAbility1Enabled(EventPlayer(), true);
+            MoiraPhase = false;
+            break;
+        case Hero.Sombra:
+            SetAbility1Enabled(EventPlayer(), true);
+            DisallowButton(EventPlayer(), Button.PrimaryFire);
+            MoiraPhase = false;
+            break;
+        case Hero.Pharah:
+            SetAbility1Enabled(EventPlayer(), true);
+            MoiraPhase = false;
+            break;
+    }
+}
+
+rule: "Moira Not Phase"
+Event.OngoingPlayer
+if (HeroOf(EventPlayer()) == Hero.Moira)
+if (IsUsingAbility1(EventPlayer()) == false)
+{
+    MoiraPhase = false;
+}
+
+rule: "Moira Orb"
+Event.OnDamageTaken
+if (HeroOf(Attacker()) == Hero.Moira)
+if (EventAbility() == Button.Ability2)
+if (Victim().IsPoisoned != true)
+{
+    SetMoveSpeed(Victim(), 60);
+    Wait(4, WaitBehavior.IgnoreCondition);
+    SetMoveSpeed(Victim(), 100);
+}
+
+rule: "Pharah Hit"
+Event.OnDamageTaken
+if (HeroOf(Attacker()) == Hero.Pharah)
+if (EventAbility() == Button.PrimaryFire)
+{
+    SetStatus(Victim(), null, Status.KnockedDown, 1);
+    Wait(4, WaitBehavior.IgnoreCondition);
+}
+
+rule: "Pharah Fix"
+Event.OngoingPlayer
+if (HeroOf(EventPlayer()) == Hero.Pharah)
+{
+    AllowButton(EventPlayer(), Button.PrimaryFire);
+    SetMaxAmmo(EventPlayer(), 0, 1);
+    SetDamageDealt(EventPlayer(), 1);
+}
+
+rule: "Player HUD"
+{
+    # @Condition isGameInProgress() == true
+    CreateHudText(AllPlayers(Team.All), "", "Round", null, Location.Left, 0, Color.Turquoise, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(AllPlayers(Team.All), <"<0> ", Round>, "", null, Location.Left, 1, Color.Turquoise, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(AllPlayers(Team.All), "", "Death Line Speed", null, Location.Left, 2, Color.Turquoise, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(AllPlayers(Team.All), <"<0> ", LineSpeed>, "", null, Location.Left, 3, Color.Turquoise, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(AllPlayers(Team.All), "4T6VF", <"<0> Join Our Discord @", AbilityIconString(Hero.Orisa, Button.SecondaryFire)>, "discord.gg/Y2PFｂｗ6", Location.Left, -1, Color.Turquoise, Color.Orange, Color.Orange, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    # hudText(getAllPlayers(), \"\", \"Join Our Discord @ discord.gg/\", null, HudPosition.LEFT, 4, Color.TURQUOISE, Color.ORANGE, Color.WHITE, HudReeval.VISIBILITY_AND_STRING, SpecVisibility.DEFAULT)
+    CreateHudText(AllPlayers(Team.All), "", "Back n' Forth!\n      Version 2.0.0, Made by Hazno#21688\n         Use Code 4T6VF for latest version", null, Location.Top, 0, Color.Turquoise, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(AllLivingPlayers(Team.All), "", "\n \n \n \n \n \n \n \n \n \n  \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n ", null, Location.Top, 3, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+}
+
+rule: "Melee Hud"
+Event.OngoingPlayer
+{
+    # hudText(getLivingPlayers(Team.ALL), \"\", \"  \\n \\n \\n \\n \\n \\n \\n \\n \\n \\n  \\n \\n \\n \\n \\n \\n \\n \\n \\n \\n \\n \\n \\n \\n \\n \\n \\n \\n \\n \\n \\n \\n \\n \\n \\n \\n \", null, HudPosition.TOP, 3, Color.WHITE, Color.WHITE, Color.WHITE, HudReeval.VISIBILITY_AND_STRING, Spe
+    CreateHudText(IsAlive(EventPlayer()) ? EventPlayer() : [], <"<0> Melee CD <1>", AbilityIconString(Hero.Baptiste, Button.Melee), RoundToInteger(MeleeCD, Rounding.Up)>, null, null, Location.Top, 4, Color.White, null, null, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    DisableGameModeHud(EventPlayer());
+}
+
+rule: "Hud Fix"
+Event.OngoingPlayer
+{
+    NewHud = "what r u doing in my swamp";
+}
+
+rule: "CooldownHUDS"
+Event.OngoingPlayer
+if (HeroOf(EventPlayer()) != hero)
+{
+    MinWait();
+    MoiraFix();
+    hero = HeroOf(EventPlayer());
+    # eventPlayer.NewHud = 10000
+    if (HeroOf(EventPlayer()) == Hero.Mercy)
+    {
+        DestroyHudText(NewHud);
+        CreateHudText(IsAlive(EventPlayer()) ? EventPlayer() : [], <"<0> Sprint Charge <1>", AbilityIconString(Hero.Soldier76, Button.Ability1), RoundToInteger(MercySprint, Rounding.Nearest)>, null, null, Location.Top, 5, Color.Aqua, null, null, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+        NewHud = LastTextID();
+    }
+    else if (HeroOf(EventPlayer()) == Hero.Ana)
+    {
+        DestroyHudText(NewHud);
+        CreateHudText(IsAlive(EventPlayer()) ? EventPlayer() : [], <"<0> Heal Bomb CD <1>", AbilityIconString(Hero.Baptiste, Button.Ability1), RoundToInteger(AnaHealCD, Rounding.Up)>, null, null, Location.Top, 5, Color.Aqua, null, null, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+        NewHud = LastTextID();
+    }
+    else if (HeroOf(EventPlayer()) == Hero.Genji)
+    {
+        DestroyHudText(NewHud);
+        CreateHudText(IsAlive(EventPlayer()) ? EventPlayer() : [], <"<0> Dragon Orb <1>", AbilityIconString(Hero.Hanzo, Button.Ultimate), RoundToInteger(GenjiCD, Rounding.Up)>, null, null, Location.Top, 5, Color.Aqua, null, null, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+        NewHud = LastTextID();
+    }
+    else if (HeroOf(EventPlayer()) == Hero.Mei)
+    {
+        DestroyHudText(NewHud);
+        CreateHudText(IsAlive(EventPlayer()) ? EventPlayer() : [], <"<0> Ammo <1>", AbilityIconString(Hero.Mei, Button.Reload), RoundToInteger(MeiAmmo, Rounding.Up)>, null, null, Location.Top, 5, Color.Aqua, null, null, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+        NewHud = LastTextID();
+    }
+    else if (HeroOf(EventPlayer()) == Hero.Widowmaker)
+    {
+        DestroyHudText(NewHud);
+        CreateHudText(IsAlive(EventPlayer()) ? EventPlayer() : [], <"<0> Teleport <1>", AbilityIconString(Hero.Tracer, Button.Ability1), RoundToInteger(WidowCD, Rounding.Up)>, null, null, Location.Top, 5, Color.Aqua, null, null, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+        NewHud = LastTextID();
+    }
+    else if (NewHud != 0)
+    {
+        DestroyHudText(NewHud);
+    }
+}
+
+rule: "Ana Hud"
+{
+    CreateHudText(PlayersOnHero(Hero.Ana, Team.All), <"<0>", HeroIconString(Hero.Ana)>, "\nAna can Sleep enemies and Heal herself                          ", null, Location.Right, 0, Color.Blue, Color.Blue, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Ana, Team.All), <"<0>", AbilityIconString(Hero.Ana, Button.Ability1)>, "Sleep Dart                                                                                   \n12s CD  ", null, Location.Right, 1, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Ana, Team.All), <"<0>", AbilityIconString(Hero.Baptiste, Button.Ability1)>, "Heal Bomb - Instantly heal 50hp and go 25% faster   \n10s CD                                        ", null, Location.Right, 2, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+}
+
+rule: "Mercy Hud"
+{
+    CreateHudText(PlayersOnHero(Hero.Mercy, Team.All), <"<0>", HeroIconString(Hero.Mercy)>, "\nMercy can Sprint fast and regenerate passively", null, Location.Right, 0, Color.Blue, Color.Blue, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Mercy, Team.All), <"<0>", AbilityIconString(Hero.Soldier76, Button.Ability1)>, "Sprint Burst - Run 50% Faster                                     \nRecharging Ability                                          ", null, Location.Right, 1, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Mercy, Team.All), <"<0>", AbilityIconString(Hero.Baptiste, Button.Ability1)>, "Angelic Regeneration - Passively Heal                    \nNo CD                                                    ", null, Location.Right, 2, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Mercy, Team.All), <"<0>", AbilityIconString(Hero.Mercy, Button.Ability2)>, "Cease - Stop The Line for 4s                                          \n60s CD                                ", null, Location.Right, 3, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+}
+
+rule: "Roadhog Hud"
+{
+    CreateHudText(PlayersOnHero(Hero.Roadhog, Team.All), <"<0>", HeroIconString(Hero.Roadhog)>, "\nRoadhog can Displace enemies and Phase through walls         ", null, Location.Right, 0, Color.Blue, Color.Blue, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Roadhog, Team.All), <"<0>", AbilityIconString(Hero.Roadhog, Button.Ability1)>, "Chain Hook                                                                                                 \n24s CD", null, Location.Right, 1, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Roadhog, Team.All), <"<0>", AbilityIconString(Hero.Roadhog, Button.Ability2)>, "Phase Change - Walk through walls while healing                      \n24s CD", null, Location.Right, 2, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+}
+
+rule: "Ashe Hud"
+{
+    CreateHudText(PlayersOnHero(Hero.Ashe, Team.All), <"<0>", HeroIconString(Hero.Ashe)>, "\nAshe can Displace and Slow down enemies                      ", null, Location.Right, 0, Color.Blue, Color.Blue, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Ashe, Team.All), <"<0>", AbilityIconString(Hero.Ashe, Button.Ability1)>, "Boop - Boop an enemy in the direction hit                         \n20s CD                                       ", null, Location.Right, 1, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Ashe, Team.All), <"<0>", AbilityIconString(Hero.Ashe, Button.Ability2)>, "Grenade - Anyone hit will be slowed down 50%            \n16s CD                        ", null, Location.Right, 2, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+}
+
+rule: "Sombra Hud"
+{
+    CreateHudText(PlayersOnHero(Hero.Sombra, Team.All), <"<0>", HeroIconString(Hero.Sombra)>, "\nSombra can stun enemies and go invisible                     ", null, Location.Right, 0, Color.Blue, Color.Blue, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Sombra, Team.All), <"<0>", AbilityIconString(Hero.Sombra, Button.Ability1)>, "Stealth - Stealth for 6 seconds                                            \n12s CD                                        ", null, Location.Right, 1, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Sombra, Team.All), <"<0>", AbilityIconString(Hero.Sombra, Button.Ability2)>, "Hack - Stun enemies who get hacked                                 \n20s CD", null, Location.Right, 2, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Sombra, Team.All), <"<0>", AbilityIconString(Hero.Sombra, Button.Ultimate)>, "EMP - Hack multiple enemies at once                                   \nCharges 10% per melee", null, Location.Right, 3, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+}
+
+rule: "Mei Hud"
+{
+    CreateHudText(PlayersOnHero(Hero.Mei, Team.All), <"<0>", HeroIconString(Hero.Mei)>, "\nMei craves the blood of her enemies, freeze and block paths  ", null, Location.Right, 0, Color.Blue, Color.Blue, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Mei, Team.All), <"<0>", AbilityIconString(Hero.Mei, Button.PrimaryFire)>, "Freeze - Satan slows down her enemies                                           \nRecharging Ability ", null, Location.Right, 1, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Mei, Team.All), <"<0>", AbilityIconString(Hero.Mei, Button.Ability2)>, "Ice Wall                                                                                                       \n36s CD ", null, Location.Right, 2, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Mei, Team.All), <"<0>", AbilityIconString(Hero.Mei, Button.Ultimate)>, "Snowball - Call upon satan and freeze everyone in an area \nCharges 10% per melee", null, Location.Right, 3, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+}
+
+rule: "Lucio Hud"
+{
+    CreateHudText(PlayersOnHero(Hero.Lucio, Team.All), <"<0>", HeroIconString(Hero.Lucio)>, "\nLucio can Manipulate time and Boop enemies                               ", null, Location.Right, 0, Color.Blue, Color.Blue, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Lucio, Team.All), <"<0>", AbilityIconString(Hero.Lucio, Button.SecondaryFire)>, "Boop - Boop an enemy in the direction hit                                     \n10s CD", null, Location.Right, 1, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Lucio, Team.All), <"<0>", AbilityIconString(Hero.Tracer, Button.Ability2)>, "Timestop - Move 2x faster and slowdown time for everyone \nCharges 10% per melee", null, Location.Right, 2, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+}
+
+rule: "Widow Hud"
+{
+    CreateHudText(PlayersOnHero(Hero.Widowmaker, Team.All), <"<0>", HeroIconString(Hero.Widowmaker)>, "\nWidowmaker can Teleport and Slow down enemies                ", null, Location.Right, 0, Color.Blue, Color.Blue, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Widowmaker, Team.All), <"<0>", AbilityIconString(Hero.Widowmaker, Button.Ability2)>, "Venom Mine - Slowdown enemies who hit it                                \n30s CD", null, Location.Right, 1, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Widowmaker, Team.All), <"<0>", AbilityIconString(Hero.Tracer, Button.Ability1)>, "Teleport - Snipe a target to swap positions with them              \n36s CD", null, Location.Right, 2, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+}
+
+rule: "Genji Hud"
+{
+    CreateHudText(PlayersOnHero(Hero.Genji, Team.All), <"<0>", HeroIconString(Hero.Genji)>, "\nGenji can negate Damage and Stun enemies                              ", null, Location.Right, 0, Color.Blue, Color.Blue, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Genji, Team.All), <"<0>", AbilityIconString(Hero.Hanzo, Button.Ultimate)>, "Dragon Orb - Become Unvulnerable and move faster           \n26s CD", null, Location.Right, 1, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Genji, Team.All), <"<0>", AbilityIconString(Hero.Genji, Button.Ability2)>, "Deflect                                                                                                     \n16s CD", null, Location.Right, 2, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Genji, Team.All), <"<0>", AbilityIconString(Hero.Genji, Button.Ultimate)>, "Dragonstrike - Move faster and get unlimited attacks          \nCharges 5% per melee", null, Location.Right, 3, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+}
+
+rule: "Junkrat Hud"
+{
+    CreateHudText(PlayersOnHero(Hero.Junkrat, Team.All), <"<0>", HeroIconString(Hero.Junkrat)>, "\nJunkrat can trap and knockback other players                 ", null, Location.Right, 0, Color.Blue, Color.Blue, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Junkrat, Team.All), <"<0>", AbilityIconString(Hero.Junkrat, Button.PrimaryFire)>, "Bombs - Knockback enemies                                                         \n1 Bullet ", null, Location.Right, 1, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Junkrat, Team.All), <"<0>", AbilityIconString(Hero.Junkrat, Button.Ability1)>, "Mines - Knockback enemies                                                           \n32s CD", null, Location.Right, 2, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Junkrat, Team.All), <"<0>", AbilityIconString(Hero.Junkrat, Button.Ability2)>, "Trap - Trap enemies in place!                                                          \n30s CD", null, Location.Right, 3, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+}
+
+rule: "Moira Hud"
+{
+    CreateHudText(PlayersOnHero(Hero.Moira, Team.All), <"<0>", HeroIconString(Hero.Moira)>, "\nMoira can phase through walls and slowdown enemies             ", null, Location.Right, 0, Color.Blue, Color.Blue, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Moira, Team.All), <"<0>", AbilityIconString(Hero.Moira, Button.Ability1)>, "Phase - Phase through all walls                                                              \nCharges 10% per melee ", null, Location.Right, 1, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Moira, Team.All), <"<0>", AbilityIconString(Hero.Moira, Button.Ability2)>, "Orbs - Slowdown enemies hit for 4 seconds by 20%                          \n20s CD", null, Location.Right, 2, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Moira, Team.All), <"<0>", AbilityIconString(Hero.Moira, Button.Melee)>, "Melee - Melee applies a frozen effect on players                                  \n4s CD", null, Location.Right, 3, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+}
+
+rule: "Pharah Hud"
+{
+    CreateHudText(PlayersOnHero(Hero.Pharah, Team.All), <"<0>", HeroIconString(Hero.Pharah)>, "\nPharah can hack enemies and jump over walls             ", null, Location.Right, 0, Color.Blue, Color.Blue, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Pharah, Team.All), <"<0>", AbilityIconString(Hero.Pharah, Button.PrimaryFire)>, "Bomb - Enemies hit are stunned                                              \n2 Bullets ", null, Location.Right, 1, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Pharah, Team.All), <"<0>", AbilityIconString(Hero.Pharah, Button.Ability1)>, "Leap - Jump over walls                                                              \n40s CD ", null, Location.Right, 2, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(PlayersOnHero(Hero.Pharah, Team.All), <"<0>", AbilityIconString(Hero.Pharah, Button.Ability2)>, "Boop - Boop Enemies Hit                                                            \n27s CD", null, Location.Right, 3, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+}
+
+rule: "Voting HUD + Array"
+{
+    Vote1 = [];
+    Vote2 = [];
+    Vote3 = [];
+    Vote4 = [];
+    CreateHudText(VoteInProgress == true ? AllDeadPlayers(Team.All) : [], "", "", "- Voting -", Location.Top, 4, Color.White, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(VoteInProgress == true && EventCD[1] < 2 ? AllDeadPlayers(Team.All) : [], <"<0> - <1>", IconString(Icon.Spiral), CountOf(Vote1)>, "Speed Up Laser Speed +0.1                                   ", "Ability 1", Location.Top, 5, Color.Red, Color.White, Color.Orange, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(VoteInProgress == true && EventCD[2] < 2 ? AllDeadPlayers(Team.All) : [], <"<0> - <1>", IconString(Icon.Dizzy), CountOf(Vote2)>, "Sleep All Players for 3s                                     ", "Ability 2", Location.Top, 6, Color.Green, Color.White, Color.Orange, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(VoteInProgress == true && EventCD[3] < 2 ? AllDeadPlayers(Team.All) : [], <"<0> - <1>", IconString(Icon.Happy), CountOf(Vote3)>, "Allow Walls to be walked through for 3s", "Reload", Location.Top, 7, Color.Purple, Color.White, Color.Orange, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(VoteInProgress == true && EventCD[4] < 2 ? AllDeadPlayers(Team.All) : [], <"<0> - <1>", IconString(Icon.Diamond), CountOf(Vote4)>, "Force all Players to crouch for 5s              ", "Crouch", Location.Top, 8, Color.Aqua, Color.White, Color.Orange, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(VoteInProgress == true ? AllDeadPlayers(Team.All) : [], "", "\n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n ", "", Location.Top, 12, Color.Aqua, Color.White, Color.Orange, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(VoteInProgress == false ? AllDeadPlayers(Team.All) : [], "", "", "\n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n ", Location.Top, 12, Color.Aqua, Color.White, Color.Orange, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(AllDeadPlayers(Team.All), "Press Space To Spectate", "", "", Location.Top, 13, Color.Aqua, Color.White, Color.Orange, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+    CreateHudText(VoteTimer > 0 ? AllPlayers(Team.All) : [], <"<0> Players Are Voting <0>\n                          <1>", IconString(Icon.Fire), VoteTimer>, "", "", Location.Top, 2, Color.Red, Color.White, Color.White, HudTextRev.VisibleToAndString, Spectators.DefaultVisibility);
+}
+
+rule: "Ability 1"
+Event.OngoingPlayer
+if (IsDead(EventPlayer()) == true)
+if (IsButtonHeld(EventPlayer(), Button.Ability1) == true)
+if (ArrayContains(Vote1, EventPlayer()) == false)
+if (VoteInProgress == true)
+if (VoteCD == 0)
+if (EventCD[1] < 2)
+{
+    ModifyVariable(Vote1, Operation.AppendToArray, EventPlayer());
+    ModifyVariable(Vote2, Operation.RemoveFromArrayByValue, EventPlayer());
+    ModifyVariable(Vote3, Operation.RemoveFromArrayByValue, EventPlayer());
+    ModifyVariable(Vote4, Operation.RemoveFromArrayByValue, EventPlayer());
+    VoteCD = 1;
+    ChaseVariableOverTime(VoteCD, 0, 1, TimeChaseReevaluation.DestinationAndDuration);
+}
+
+rule: "Ability 2"
+Event.OngoingPlayer
+if (IsDead(EventPlayer()) == true)
+if (IsButtonHeld(EventPlayer(), Button.Ability2) == true)
+if (ArrayContains(Vote2, EventPlayer()) == false)
+if (VoteInProgress == true)
+if (VoteCD == 0)
+if (EventCD[2] < 2)
+{
+    ModifyVariable(Vote1, Operation.RemoveFromArrayByValue, EventPlayer());
+    ModifyVariable(Vote2, Operation.AppendToArray, EventPlayer());
+    ModifyVariable(Vote3, Operation.RemoveFromArrayByValue, EventPlayer());
+    ModifyVariable(Vote4, Operation.RemoveFromArrayByValue, EventPlayer());
+    VoteCD = 1;
+    ChaseVariableOverTime(VoteCD, 0, 1, TimeChaseReevaluation.DestinationAndDuration);
+}
+
+rule: "Reload"
+Event.OngoingPlayer
+if (IsDead(EventPlayer()) == true)
+if (IsButtonHeld(EventPlayer(), Button.Reload) == true)
+if (ArrayContains(Vote3, EventPlayer()) == false)
+if (VoteInProgress == true)
+if (VoteCD == 0)
+if (EventCD[3] < 2)
+{
+    ModifyVariable(Vote1, Operation.RemoveFromArrayByValue, EventPlayer());
+    ModifyVariable(Vote2, Operation.RemoveFromArrayByValue, EventPlayer());
+    ModifyVariable(Vote3, Operation.AppendToArray, EventPlayer());
+    ModifyVariable(Vote4, Operation.RemoveFromArrayByValue, EventPlayer());
+    VoteCD = 1;
+    ChaseVariableOverTime(VoteCD, 0, 1, TimeChaseReevaluation.DestinationAndDuration);
+}
+
+rule: "Crouch"
+Event.OngoingPlayer
+if (IsDead(EventPlayer()) == true)
+if (IsButtonHeld(EventPlayer(), Button.Crouch) == true)
+if (ArrayContains(Vote4, EventPlayer()) == false)
+if (VoteInProgress == true)
+if (VoteCD == 0)
+if (EventCD[4] < 2)
+{
+    ModifyVariable(Vote1, Operation.RemoveFromArrayByValue, EventPlayer());
+    ModifyVariable(Vote2, Operation.RemoveFromArrayByValue, EventPlayer());
+    ModifyVariable(Vote3, Operation.RemoveFromArrayByValue, EventPlayer());
+    ModifyVariable(Vote4, Operation.AppendToArray, EventPlayer());
+    VoteCD = 1;
+    ChaseVariableOverTime(VoteCD, 0, 1, TimeChaseReevaluation.DestinationAndDuration);
+}
+
+rule: "Vote Timer"
+if (VoteInProgress == true)
+if (FilteredArray(NumberOfDeadPlayers(Team.All), !IsDummyBot(ArrayElement())) > 0)
+{
+    SmallMessage(AllPlayers(Team.All), "Dead Players Are Voting!");
+    VoteTimer = 9;
+    ChaseVariableOverTime(VoteTimer, 0, 9, TimeChaseReevaluation.DestinationAndDuration);
+    Wait(9, WaitBehavior.AbortWhenFalse);
+    VoteInProgress = false;
+    VoteFinal[1] = CountOf(Vote1);
+    VoteFinal[2] = CountOf(Vote2);
+    VoteFinal[3] = CountOf(Vote3);
+    VoteFinal[4] = CountOf(Vote4);
+    HighestVoteFinal = LastOf(SortedArray(VoteFinal, ArrayElement()));
+    if (CountOf(FilteredArray(VoteFinal, ArrayElement() == HighestVoteFinal)) != 1)
+    {
+        BigMessage(AllPlayers(Team.All), "Draw! Picking Random Event");
+        Wait(2, WaitBehavior.IgnoreCondition);
+        RandomEvent = RandomInteger(1, 4);
+        switch (RandomEvent) {
+            case 1:
+            BigMessage(AllPlayers(Team.All), "Line Speed Increased +0.1!");
+            SmallMessage(AllPlayers(Team.All), "Event!");
+            LineSpeed += 0.1;
+            LineSpeedPrev = LineSpeed;
+            VoteFinal = 0;
+            HighestVoteFinal = 0;
+            Vote1 = [];
+            Vote2 = [];
+            Vote3 = [];
+            Vote4 = [];
+            EventCD[1] = 0;
+            EventCD[2] = 0;
+            EventCD[3] = 0;
+            EventCD[4] = 0;
+            RandomEvent = 0;
+            break;
+        case 2:
+            BigMessage(AllPlayers(Team.All), "Slept All Players for 3s!");
+            SmallMessage(AllPlayers(Team.All), "Event!");
+            SetStatus(FilteredArray(AllLivingPlayers(Team.All), !IsDummyBot(ArrayElement())), null, Status.Asleep, 3);
+            VoteFinal = 0;
+            HighestVoteFinal = 0;
+            Vote1 = [];
+            Vote2 = [];
+            Vote3 = [];
+            Vote4 = [];
+            EventCD[1] = 0;
+            EventCD[2] = 0;
+            EventCD[3] = 0;
+            EventCD[4] = 0;
+            RandomEvent = 0;
+            break;
+        case 3:
+            BigMessage(AllPlayers(Team.All), "Walls Can Be Walked through for 3s!");
+            SmallMessage(AllPlayers(Team.All), "Event!");
+            FilteredArray(AllPlayers(Team.All), !IsDummyBot(ArrayElement())).WallEvent = true;
+            Wait(3, WaitBehavior.IgnoreCondition);
+            FilteredArray(AllPlayers(Team.All), !IsDummyBot(ArrayElement())).WallEvent = false;
+            SmallMessage(AllPlayers(Team.All), "Event Over!");
+            VoteFinal = 0;
+            HighestVoteFinal = 0;
+            Vote1 = [];
+            Vote2 = [];
+            Vote3 = [];
+            Vote4 = [];
+            EventCD[1] = 0;
+            EventCD[2] = 0;
+            EventCD[3] = 0;
+            EventCD[4] = 0;
+            RandomEvent = 0;
+            break;
+        case 4:
+            BigMessage(AllPlayers(Team.All), "All Players Crouched for 5s!");
+            SmallMessage(AllPlayers(Team.All), "Event!");
+            StartHoldingButton(AllLivingPlayers(Team.All), Button.Crouch);
+            Wait(5, WaitBehavior.IgnoreCondition);
+            StopHoldingButton(AllPlayers(Team.All), Button.Crouch);
+            SmallMessage(AllPlayers(Team.All), "Event Over!");
+            VoteFinal = 0;
+            HighestVoteFinal = 0;
+            Vote1 = [];
+            Vote2 = [];
+            Vote3 = [];
+            Vote4 = [];
+            EventCD[1] = 0;
+            EventCD[2] = 0;
+            EventCD[3] = 0;
+            EventCD[4] = 0;
+            RandomEvent = 0;
+        }
+    }
+    else if (CountOf(Vote1) == HighestVoteFinal)
+    {
+        BigMessage(AllPlayers(Team.All), "Line Speed Increased +0.1!");
+        SmallMessage(AllPlayers(Team.All), "Event!");
+        LineSpeed += 0.1;
+        LineSpeedPrev = LineSpeed;
+        VoteFinal = 0;
+        HighestVoteFinal = 0;
+        Vote1 = [];
+        Vote2 = [];
+        Vote3 = [];
+        Vote4 = [];
+        EventCD[1] += 1;
+        EventCD[2] = 0;
+        EventCD[3] = 0;
+        EventCD[4] = 0;
+    }
+    else if (CountOf(Vote2) == HighestVoteFinal)
+    {
+        BigMessage(AllPlayers(Team.All), "Slept All Players for 3s!");
+        SmallMessage(AllPlayers(Team.All), "Event!");
+        SetStatus(FilteredArray(AllLivingPlayers(Team.All), !IsDummyBot(ArrayElement())), null, Status.Asleep, 3);
+        VoteFinal = 0;
+        HighestVoteFinal = 0;
+        Vote1 = [];
+        Vote2 = [];
+        Vote3 = [];
+        Vote4 = [];
+        EventCD[1] = 0;
+        EventCD[2] += 1;
+        EventCD[3] = 0;
+        EventCD[4] = 0;
+    }
+    else if (CountOf(Vote3) == HighestVoteFinal)
+    {
+        BigMessage(AllPlayers(Team.All), "Walls Can Be Walked through for 3s!");
+        SmallMessage(AllPlayers(Team.All), "Event!");
+        FilteredArray(AllPlayers(Team.All), !IsDummyBot(ArrayElement())).WallEvent = true;
+        Wait(3, WaitBehavior.IgnoreCondition);
+        FilteredArray(AllPlayers(Team.All), !IsDummyBot(ArrayElement())).WallEvent = false;
+        SmallMessage(AllPlayers(Team.All), "Event Over!");
+        VoteFinal = 0;
+        HighestVoteFinal = 0;
+        Vote1 = [];
+        Vote2 = [];
+        Vote3 = [];
+        Vote4 = [];
+        EventCD[1] = 0;
+        EventCD[2] = 0;
+        EventCD[3] += 1;
+        EventCD[4] = 0;
+    }
+    else if (CountOf(Vote4) == HighestVoteFinal)
+    {
+        BigMessage(AllPlayers(Team.All), "All Players Crouched for 5s!");
+        SmallMessage(AllPlayers(Team.All), "Event!");
+        StartHoldingButton(AllLivingPlayers(Team.All), Button.Crouch);
+        Wait(5, WaitBehavior.IgnoreCondition);
+        StopHoldingButton(AllPlayers(Team.All), Button.Crouch);
+        SmallMessage(AllPlayers(Team.All), "Event Over!");
+        VoteFinal = 0;
+        HighestVoteFinal = 0;
+        Vote1 = [];
+        Vote2 = [];
+        Vote3 = [];
+        Vote4 = [];
+        EventCD[1] = 0;
+        EventCD[2] = 0;
+        EventCD[3] = 1;
+        // pass
+        // Abort();
+    }
+}
+
+rule: "Vote Fix"
+if (VoteInProgress == true)
+if (FilteredArray(NumberOfDeadPlayers(Team.All), !IsDummyBot(ArrayElement())) == 0)
+{
+    VoteInProgress = false;
+}
+
+rule: "Create Orbs"
+{
+    CreateEffect(AllPlayers(Team.All), Effect.Sphere, Color.Orange, RandomOrbs, 1, EffectRev.VisibleToPositionAndRadius);
+}
+
+void RandomOrbsF() "RandomOrbs"
+{
+    RandomOrbs = Vector(RandomReal(-12, 12), 46.5, RandomReal(-12, 12));
+}
+
+rule: "ClaimOrb"
+Event.OngoingPlayer
+if (IsDummyBot(EventPlayer()) == false)
+if (DistanceBetween(EventPlayer(), RandomOrbs) <= 1.2)
+{
+    RandomOrbs = Vector(0, -5, 0);
+    RandomOrbsEvent = RandomInteger(1, 5);
+    switch (RandomOrbsEvent) {
+        case 1:
+            PlayEffect(EventPlayer(), PlayEffect.GoodPickupEffect, Color.White, PositionOf(EventPlayer()), 100);
+            Heal(EventPlayer(), null, 50);
+            SmallMessage(EventPlayer(), "Healed 50!");
+            RandomOrbsEvent = 0;
+            break;
+        case 2:
+            PlayEffect(EventPlayer(), PlayEffect.GoodPickupEffect, Color.White, PositionOf(EventPlayer()), 100);
+            SmallMessage(EventPlayer(), "20% Ultimate Gain!");
+            RandomOrbsEvent = 0;
+            if (HeroOf(EventPlayer()) == Hero.Genji)
+            {
+                GenjiUlt += 20;
+                SetUltimateCharge(EventPlayer(), GenjiUlt);
+            }
+            else if (HeroOf(EventPlayer()) == Hero.Lucio)
+            {
+                LucioUlt += 20;
+                SetUltimateCharge(EventPlayer(), LucioUlt);
+            }
+            else if (HeroOf(EventPlayer()) == Hero.Mei)
+            {
+                MeiUlt += 20;
+                SetUltimateCharge(EventPlayer(), MeiUlt);
+            }
+            else if (HeroOf(EventPlayer()) == Hero.Sombra)
+            {
+                SombraEMP += 20;
+                SetUltimateCharge(EventPlayer(), SombraEMP);
+            }
+            else if (HeroOf(EventPlayer()) == Hero.Moira)
+            {
+                MoiraUlt += 20;
+                SetUltimateCharge(EventPlayer(), MoiraUlt);
+            }
+            break;
+        case 3:
+            PlayEffect(EventPlayer(), PlayEffect.BadPickupEffect, Color.White, PositionOf(EventPlayer()), 100);
+            SetStatus(EventPlayer(), null, Status.Stunned, 2);
+            SmallMessage(EventPlayer(), "Stunned!");
+            RandomOrbsEvent = 0;
+            break;
+        case 4:
+            PlayEffect(EventPlayer(), PlayEffect.BadPickupEffect, Color.White, PositionOf(EventPlayer()), 100);
+            Damage(EventPlayer(), null, 25);
+            SmallMessage(EventPlayer(), "Ouch!");
+            RandomOrbsEvent = 0;
+            break;
+        case 5:
+            PlayEffect(EventPlayer(), PlayEffect.GoodPickupEffect, Color.White, PositionOf(EventPlayer()), 100);
+            Teleport(EventPlayer(), Safety);
+            SmallMessage(EventPlayer(), "Teleported To Safety!");
+            RandomOrbsEvent = 0;
+            break;
+    }
+}
+
+rule: "Variation 4 circle of DOOM"
+if (WallsRandom[1] == 4)
+{
+    CircleTrapHeight = 46;
+    CircleTrapAngle = 0;
+    while (WallsRandom[1] == 4)
+    {
+        CircleTrapAngle = 20;
+        ChaseVariableOverTime(CircleTrapAngle, 380, 1.5, TimeChaseReevaluation.DestinationAndDuration);
+        ChaseVariableOverTime(CircleTrapHeight, 51, 0.75, TimeChaseReevaluation.DestinationAndDuration);
+        Wait(0.75, WaitBehavior.IgnoreCondition);
+        ChaseVariableOverTime(CircleTrapHeight, 46, 0.75, TimeChaseReevaluation.DestinationAndDuration);
+        Wait(0.75, WaitBehavior.IgnoreCondition);
+    }
+}
+
+rule: "Variation 4 Circle of DOOM stun"
+Event.OngoingPlayer
+if (RayCastHitPlayer(DirectionFromAngles(CircleTrapAngle + 180, 0) * 7 + Vector(0, CircleTrapHeight, -14.5), DirectionFromAngles(CircleTrapAngle, 0) * 7 + Vector(0, CircleTrapHeight, -14.5), EventPlayer(), null, true) == true)
+if (WallsRandom[1] == 4)
+{
+    SetStatus(EventPlayer(), null, Status.KnockedDown, 2);
+    Wait(4, WaitBehavior.IgnoreCondition);
+    LoopIfConditionIsTrue();
+}
+
+rule: "Variation 4 delete doom"
+{
+    CreateBeamEffect(WallsRandom[1] == 4 ? AllPlayers(Team.All) : [], BeamType.BadBeam, DirectionFromAngles(CircleTrapAngle + 180, 0) * 7.5 + Vector(0, CircleTrapHeight, -14.5), DirectionFromAngles(CircleTrapAngle, 0) * 7.5 + Vector(0, CircleTrapHeight, -14.5), Color.Red, EffectRev.VisibleToPositionAndRadius);
+    CreateEffect(WallsRandom[1] == 4 ? AllPlayers(Team.All) : [], Effect.Orb, Color.Red, Vector(0, CircleTrapHeight, -14.5), 0.5, EffectRev.VisibleToPositionAndRadius);
+    CreateEffect(WallsRandom[1] == 4 ? AllPlayers(Team.All) : [], Effect.Sphere, Color.Purple, Vector(0, 46, -14.5), 0.5, EffectRev.VisibleToPositionAndRadius);
+    CreateBeamEffect(WallsRandom[1] == 4 ? AllPlayers(Team.All) : [], BeamType.GrappleBeam, Vector(0, 46, -14.5), Vector(0, CircleTrapHeight, -14.501), Color.White, EffectRev.VisibleToPositionAndRadius);
+}

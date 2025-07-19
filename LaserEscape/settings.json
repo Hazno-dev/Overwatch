@@ -1,0 +1,51 @@
+{
+	"Main" : {
+        "Name" : "Laser Escape",
+        "Description" : "Laser Escape V1.0.0 =-= Use code 4T6VF for latest version =-= Go back and forth between the objective while running away from the kill lasers =-= Made By Hazno#21688 =-= Discord.gg/Y2PFbw6"
+    },
+	"Lobby" : {
+        "Max FFA Players" : 10
+    },
+    "Modes" : {
+        "Deathmatch" : {
+            "enabled maps" : {
+                "Workshop Chamber",
+            },
+            "Game Length In Minutes" : 15,
+            "Score To Win" : 50,
+            "Self Initiated Respawn" : false
+        },
+        "General" : {
+            "Allow Hero Switching" : false,
+            "Hero Limit" : 0,
+            "Respawn As Random Hero" : true
+        }
+    },
+	"Heroes" : {
+        "General" : {
+            "Damage Dealt" : 10,
+            "Mercy" : {
+                "Damage Dealt": 10,
+                "Jump Vertical Speed": 25,
+                "Movement Speed": 135,
+                "Primary Fire": false,
+                "Secondary Fire": false,
+                "Ultimate Ability Valkyrie": false
+        },
+            "Enabled Heroes" : {
+                "Ana",
+                "Ashe",
+                "Genji",
+                "Junkrat",
+                "Lúcio",
+                "Mei",
+                "Mercy",
+                "Moira",
+                "Pharah",
+                "Roadhog",
+                "Sombra",
+                "Widowmaker",
+            },
+        }
+    }
+}

@@ -1,0 +1,217 @@
+{
+  "Lobby": {
+    "Max FFA Players": 10
+  },
+  "Modes": {
+    "All": {
+      "Allow Hero Switching": false,
+      "Hero Limit": "Off",
+      "Respawn As Random Hero": true
+    },
+    "Deathmatch": {      
+      "Enabled Maps": [
+        "Workshop Chamber"
+      ],
+      "Game Length In Minutes": 15,
+      "Self Initiated Respawn": false,
+      "Score To Win": 50
+    }
+  },
+  "Heroes": {
+    "General": {
+      "Enabled Heroes": [
+        "Ana",
+        "Ashe",
+        "Genji",
+        "Junkrat",
+        "Lúcio",
+        "Mei",
+        "Mercy",
+        "Moira",
+        "Pharah",
+        "Roadhog",
+        "Sombra",
+        "Widowmaker"
+      ],
+      "Damage Dealt": 10.0,
+      "Ana": {
+        "Biotic Grenade": false,
+        "Damage Dealt": 10.0,
+        "Health": 150.0,
+        "Jump Vertical Speed": 25.0,
+        "Movement Speed": 135.0,
+        "Primary Fire": false,
+        "Ultimate Ability Nano Boost": false
+      },
+      "Ashe": {
+        "Coach Gun Cooldown Time": 200.0,
+        "Coach Gun Knockback Scalar Enemy": 110.0,
+        "Coach Gun Knockback Scalar Self": 0.0,
+        "Damage Dealt": 10.0,
+        "Dynamite Cooldown Time": 130.0,
+        "Dynamite Fuse Time Scalar": 52.0,
+        "Jump Vertical Speed": 25.0,
+        "Movement Speed": 130.0,
+        "Primary Fire": false,
+        "Ultimate Ability B.O.B.": false
+      },
+      "Brigitte": {
+        "Repair Pack": false,
+        "Shield Bash Cooldown Time": 300.0,
+        "Shield Bash Knockback Scalar": 25.0,
+        "Whip Shot Cooldown Time": 350.0,
+        "Whip Shot Knockback Scalar": 40.0
+      },
+      "Cassidy": {
+        "Damage Received": 10.0,
+        "Flashbang Cooldown Time": 0.0,
+        "Health": 500.0,
+        "Receive Headshots Only": true
+      },
+      "Genji": {
+        "Damage Dealt": 10.0,
+        "Deflect Cooldown Time": 200.0,
+        "Jump Vertical Speed": 25.0,
+        "Movement Speed": 130.0,
+        "Primary Fire": false,
+        "Secondary Fire": false,
+        "Swift Strike": false,
+        "Ultimate Generation - Combat Dragonblade": 0.0,
+        "Ultimate Generation - Passive Dragonblade": 0.0
+      },
+      "Hanzo": {
+        "Damage Dealt": 10.0,
+        "Health": 200.0,
+        "Jump Vertical Speed": 25.0,
+        "Lunge": false,
+        "Lunge Cooldown Time": 350.0,
+        "Lunge Distance Scalar": 33.0,
+        "Movement Speed": 130.0,
+        "Sonic Arrow Cooldown Time": 500.0,
+        "Storm Arrows": false,
+        "Storm Arrows Quantity": 3,
+        "Ultimate Ability Dragonstrike": false
+      },
+      "Junkrat": {
+        "Ammunition Clip Size Scalar": 25.0,
+        "Concussion Mine Cooldown Time": 400.0,
+        "Concussion Mine Knockback Scalar": 60.0,
+        "Damage Dealt": 10.0,
+        "Frag Launcher Knockback Scalar": 3.0,
+        "Jump Vertical Speed": 25.0,
+        "Movement Gravity": 200.0,
+        "Movement Speed": 130.0,
+        "Steel Trap Cooldown Time": 300.0,
+        "Ultimate Ability Rip-Tire": false
+      },
+      "Lúcio": {
+        "Amp It Up": false,
+        "Crossfade": false,
+        "Damage Dealt": 10.0,
+        "Jump Vertical Speed": 25.0,
+        "Movement Speed": 120.0,
+        "Primary Fire": false,
+        "Soundwave Cooldown Time": 250.0,
+        "Soundwave Knockback Scalar": 90.0,
+        "Ultimate Generation - Combat Sound Barrier": 0.0,
+        "Ultimate Generation - Passive Sound Barrier": 0.0
+      },
+      "Mei": {
+        "Blizzard Freeze Minimum": 25.0,
+        "Blizzard Freeze Rate Scalar": 6.0,
+        "Cryo-Freeze": false,
+        "Damage Dealt": 10.0,
+        "Ice Wall Cooldown Time": 300.0,
+        "Jump Vertical Speed": 25.0,
+        "Movement Speed": 135.0,
+        "No Ammunition Requirement": true,
+        "Secondary Fire": false,
+        "Ultimate Generation - Combat Blizzard": 0.0,
+        "Ultimate Generation - Passive Blizzard": 0.0,
+        "Weapon Freeze Duration Scalar": 20.0,
+        "Weapon Freeze Minimum": 25.0,
+        "Weapon Freeze Rate Scalar": 7.0
+      },
+      "Mercy": {
+        "Damage Dealt": 10.0,
+        "Jump Vertical Speed": 25.0,
+        "Movement Speed": 135.0,
+        "Primary Fire": false,
+        "Secondary Fire": false,
+        "Ultimate Ability Valkyrie": false
+      },
+      "Moira": {
+        "Biotic Energy Maximum": 20.0,
+        "Biotic Energy Recharge Rate": 20.0,
+        "Biotic Orb Cooldown Time": 200.0,
+        "Biotic Orb Max Damage Scalar": 10.0,
+        "Biotic Orb Max Healing Scalar": 10.0,
+        "Damage Dealt": 10.0,
+        "Fade": false,
+        "Healing Dealt": 10.0,
+        "Jump Vertical Speed": 25.0,
+        "Movement Speed": 135.0,
+        "Projectile Speed": 0.0,
+        "Secondary Fire": false,
+        "Ultimate Duration": 25.0,
+        "Ultimate Generation - Combat Coalescence": 0.0,
+        "Ultimate Generation - Passive Coalescence": 0.0
+      },
+      "Pharah": {
+        "Ammunition Clip Size Scalar": 25.0,
+        "Concussive Blast Cooldown Time": 300.0,
+        "Concussive Blast Knockback Scalar": 70.0,
+        "Damage Dealt": 10.0,
+        "Jet Dash": false,
+        "Jump Jet Acceleration Scalar": 90.0,
+        "Jump Jet Cooldown Time": 400.0,
+        "Jump Vertical Speed": 25.0,
+        "Movement Speed": 130.0,
+        "Projectile Speed": 15.0,
+        "Rocket Launcher Knockback Scalar": 0.0,
+        "Ultimate Ability Barrage": false
+      },
+      "Roadhog": {
+        "Chain Hook Cooldown Time": 300.0,
+        "Damage Dealt": 10.0,
+        "Healing Received": 10.0,
+        "Health": 60.0,
+        "Jump Vertical Speed": 25.0,
+        "Movement Speed": 130.0,
+        "Pig Pen Cooldown Time": 300.0,
+        "Primary Fire": false,
+        "Take A Breather": false,
+        "Ultimate Ability Whole Hog": false
+      },
+      "Sombra": {
+        "Damage Dealt": 10.0,
+        "Hack Cooldown Time": 250.0,
+        "Jump Vertical Speed": 25.0,
+        "Movement Speed": 130.0,
+        "Primary Fire": false,
+        "Translocator": false,
+        "Ultimate Generation - Combat EMP": 0.0,
+        "Ultimate Generation - Passive EMP": 0.0,
+        "Virus Cooldown Time": 250.0
+      },
+      "Tracer": {
+        "Damage Dealt": 10.0,
+        "Damage Received": 10.0,
+        "Health": 500.0,
+        "No Ammunition Requirement": true
+      },
+      "Widowmaker": {
+        "Damage Dealt": 10.0,
+        "Grappling Hook": false,
+        "Jump Vertical Speed": 25.0,
+        "Movement Speed": 125.0,
+        "No Ammunition Requirement": true,
+        "No Automatic Fire": true,
+        "Ultimate Ability Infra-sight": false,
+        "Venom Mine Cooldown Time": 200.0
+      }
+    }
+  },
+  "Description": "Laser Escape V1.0.0 =-= Use code 4T6VF for latest version =-= Go back and forth between the objective while running away from the kill lasers =-= Made By Hazno#21688 =-= Discord.gg/Y2PFbw6",
+  "Mode Name": "Laser Escape"
+}
